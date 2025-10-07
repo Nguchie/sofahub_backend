@@ -1,0 +1,20 @@
+# Enable Passenger for Python/Django
+PassengerEnabled On
+PassengerAppRoot /home/u123456789/domains/yourdomain.com/public_html
+PassengerPython /home/u123456789/virtualenv/yourdomain.com/3.9/bin/python
+PassengerAppType wsgi
+PassengerStartupFile passenger_wsgi.py
+
+# Redirect all requests to Django
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /passenger_wsgi.py/$1 [QSA,L]
+
+# Serve static files directly
+RewriteCond %{REQUEST_URI} ^/static/(.*)$
+RewriteRule ^(.*)$ - [L]
+
+# Serve media files directly
+RewriteCond %{REQUEST_URI} ^/media/(.*)$
+RewriteRule ^(.*)$ - [L]
