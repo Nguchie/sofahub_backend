@@ -28,7 +28,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-7x$xfei-3mb&)=0a=(!27%fm+2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,sofahubbackend-production.up.railway.app').split(',')
 
 
 # Application definition
