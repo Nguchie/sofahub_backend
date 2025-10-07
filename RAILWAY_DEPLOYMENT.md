@@ -8,12 +8,10 @@
 - `ALLOWED_HOSTS`: Comma-separated list of allowed hosts (include your Railway domain)
 
 ### Database Configuration
-Railway will automatically provide `DATABASE_URL`. If you prefer individual settings:
-- `DB_NAME`: Database name
-- `DB_USER`: Database username  
-- `DB_PASSWORD`: Database password
-- `DB_HOST`: Database host
-- `DB_PORT`: Database port (default: 3306)
+**SQLite3 Database**: No additional database configuration needed!
+- SQLite3 database file (`db.sqlite3`) will be created automatically
+- No separate database service required
+- Database file persists with your deployment
 
 ### Email Configuration
 - `EMAIL_HOST_USER`: Your Gmail address
@@ -34,3 +32,10 @@ Railway will automatically provide `DATABASE_URL`. If you prefer individual sett
 3. Go to the "Variables" tab
 4. Add each environment variable with its value
 5. Railway will automatically restart your service
+
+## Database Migration
+
+After deployment, run migrations to set up your database:
+```bash
+python manage.py migrate
+```
