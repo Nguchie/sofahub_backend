@@ -12,7 +12,12 @@ class ProductImageInline(admin.TabularInline):
 
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" width="100" height="100" />', obj.image.url)
+            from django.conf import settings
+            if settings.DEBUG:
+                base_url = "http://localhost:8000"
+            else:
+                base_url = "https://sofahubbackend-production.up.railway.app"
+            return format_html('<img src="{}" width="100" height="100" />', f"{base_url}{obj.image.url}")
         return "No Image"
 
     image_preview.short_description = 'Preview'
