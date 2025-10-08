@@ -42,14 +42,19 @@ class ProductImageSerializer(serializers.ModelSerializer):
         if obj.image:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
+                url = request.build_absolute_uri(obj.image.url)
+                print(f"DEBUG: Request context URL: {url}")
+                return url
             else:
                 # Fallback for when no request context is available
                 from django.conf import settings
                 if settings.DEBUG:
-                    return f"http://localhost:8000{obj.image.url}"
+                    url = f"http://localhost:8000{obj.image.url}"
                 else:
-                    return f"https://sofahubbackend-production.up.railway.app{obj.image.url}"
+                    url = f"https://sofahubbackend-production.up.railway.app{obj.image.url}"
+                print(f"DEBUG: Fallback URL: {url}")
+                return url
+        print(f"DEBUG: No image for {obj}")
         return None
 
 
@@ -116,8 +121,14 @@ class ProductListSerializer(serializers.ModelSerializer):
     def get_primary_image(self, obj):
         primary_image = obj.images.filter(is_primary=True).first()
         if primary_image:
-            return ProductImageSerializer(primary_image).data
+            serializer = ProductImageSerializer(primary_image, context=self.context)
+            image_data = serializer.data
+            print(f"DEBUG: Primary image URL for {obj.name}: {image_data.get('image')}")
+            return image_data
         first_image = obj.images.first()
         if first_image:
-            return ProductImageSerializer(first_image).data
+            serializer = ProductImageSerializer(first_image, context=self.context)
+            image_data = serializer.data
+            print(f"DEBUG: First image URL for {obj.name}: {image_data.get('image')}")
+            return image_data
         return None
