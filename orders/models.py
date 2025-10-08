@@ -78,7 +78,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    variation = models.ForeignKey(ProductVariation, on_delete=models.PROTECT)
+    variation = models.ForeignKey(ProductVariation, on_delete=models.SET_NULL, null=True, blank=True)
     product_name = models.CharField(max_length=200)  # Snapshot of product name at time of purchase
     variation_attributes = models.JSONField()  # Snapshot of variation attributes
     quantity = models.PositiveIntegerField()
