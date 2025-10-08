@@ -157,11 +157,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = True
 
-# Configure WhiteNoise to serve media files
-WHITENOISE_ADD_WHITELIST = [
-    ('/media/', 'media'),
-]
-
 # Ensure static files are served correctly in production
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
