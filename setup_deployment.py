@@ -22,12 +22,9 @@ def setup_deployment():
     print("📦 Running database migrations...")
     execute_from_command_line(['manage.py', 'migrate'])
     
-    # Create superuser
-    print("👤 Creating admin user...")
-    execute_from_command_line(['manage.py', 'createsuperuser'])
-    
     print("✅ Database setup complete!")
     print("🌐 You can now access the admin panel at: https://sofahubbackend-production.up.railway.app/admin/")
+    print("👤 Note: You'll need to create an admin user manually through Django shell or admin interface")
 
 if __name__ == '__main__':
     setup_deployment()
