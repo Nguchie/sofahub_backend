@@ -38,7 +38,11 @@ class CartProductVariationSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(primary_image.image.url)
             else:
                 # Fallback for when no request context is available
-                return f"http://localhost:8000{primary_image.image.url}"
+                from django.conf import settings
+                if settings.DEBUG:
+                    return f"http://localhost:8000{primary_image.image.url}"
+                else:
+                    return f"https://sofahubbackend-production.up.railway.app{primary_image.image.url}"
         
         first_image = product.images.first()
         if first_image:
@@ -47,7 +51,11 @@ class CartProductVariationSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(first_image.image.url)
             else:
                 # Fallback for when no request context is available
-                return f"http://localhost:8000{first_image.image.url}"
+                from django.conf import settings
+                if settings.DEBUG:
+                    return f"http://localhost:8000{first_image.image.url}"
+                else:
+                    return f"https://sofahubbackend-production.up.railway.app{first_image.image.url}"
         return None
 
 

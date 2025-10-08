@@ -45,7 +45,12 @@ class BlogPostListSerializer(serializers.ModelSerializer):
             if request:
                 image_url = request.build_absolute_uri(obj.featured_image.url)
             else:
-                image_url = obj.featured_image.url
+                # Fallback for when no request context is available
+                from django.conf import settings
+                if settings.DEBUG:
+                    image_url = f"http://localhost:8000{obj.featured_image.url}"
+                else:
+                    image_url = f"https://sofahubbackend-production.up.railway.app{obj.featured_image.url}"
             return {
                 'image': image_url,
                 'alt_text': obj.featured_image_alt or obj.title
@@ -73,7 +78,12 @@ class BlogPostDetailSerializer(serializers.ModelSerializer):
             if request:
                 image_url = request.build_absolute_uri(obj.featured_image.url)
             else:
-                image_url = obj.featured_image.url
+                # Fallback for when no request context is available
+                from django.conf import settings
+                if settings.DEBUG:
+                    image_url = f"http://localhost:8000{obj.featured_image.url}"
+                else:
+                    image_url = f"https://sofahubbackend-production.up.railway.app{obj.featured_image.url}"
             return {
                 'image': image_url,
                 'alt_text': obj.featured_image_alt or obj.title

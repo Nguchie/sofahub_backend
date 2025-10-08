@@ -40,9 +40,16 @@ class ProductImageSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         """Return absolute URL for the image"""
         if obj.image:
-            # Use a default base URL for development
-            base_url = "http://localhost:8000"
-            return f"{base_url}{obj.image.url}"
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            else:
+                # Fallback for when no request context is available
+                from django.conf import settings
+                if settings.DEBUG:
+                    return f"http://localhost:8000{obj.image.url}"
+                else:
+                    return f"https://sofahubbackend-production.up.railway.app{obj.image.url}"
         return None
 
 
