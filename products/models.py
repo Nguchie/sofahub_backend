@@ -4,6 +4,26 @@ from core.utils import is_sale_active
 from django.utils import timezone
 from decimal import Decimal
 import json
+import os
+import uuid
+
+
+def product_image_upload_path(instance, filename):
+    """Custom upload path for product images to prevent filename conflicts"""
+    # Get the product name and create a slug
+    product_slug = slugify(instance.product.name) if instance.product else 'product'
+    
+    # Get file extension
+    ext = filename.split('.')[-1]
+    
+    # Create a unique filename using timestamp and UUID
+    unique_id = str(uuid.uuid4())[:8]
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    
+    # New filename: product_slug_timestamp_uniqueid.ext
+    new_filename = f"{product_slug}_{timestamp}_{unique_id}.{ext}"
+    
+    return os.path.join('products', new_filename)
 
 class RoomCategory(models.Model):
     """Living Room, Bedroom, Dining, Office, Outdoor, etc."""
@@ -165,7 +185,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
+    image = models.ImageField(upload_to=product_image_upload_path)
     alt_text = models.CharField(max_length=100, blank=True)
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
