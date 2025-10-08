@@ -12,6 +12,10 @@ class BlogTagAdmin(admin.ModelAdmin):
         return obj.posts.count()
     post_count.short_description = 'Posts'
 
+    def has_module_permission(self, request):
+        """Only superusers can see blog tags"""
+        return request.user.is_superuser
+
 
 @admin.register(BlogPost)
 class BlogPostAdmin(admin.ModelAdmin):
@@ -51,3 +55,7 @@ class BlogPostAdmin(admin.ModelAdmin):
         if not obj.author_id:
             obj.author = request.user
         super().save_model(request, obj, form, change)
+
+    def has_module_permission(self, request):
+        """Only superusers can see blog posts"""
+        return request.user.is_superuser

@@ -52,6 +52,10 @@ class OrderAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
+    def has_module_permission(self, request):
+        """Only superusers can see orders"""
+        return request.user.is_superuser
+
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
@@ -77,3 +81,7 @@ class OrderItemAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_module_permission(self, request):
+        """Only superusers can see order items"""
+        return request.user.is_superuser

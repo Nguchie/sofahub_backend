@@ -47,6 +47,10 @@ class CartAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def has_module_permission(self, request):
+        """Only superusers can see carts"""
+        return request.user.is_superuser
+
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
@@ -70,3 +74,7 @@ class CartItemAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_module_permission(self, request):
+        """Only superusers can see cart items"""
+        return request.user.is_superuser

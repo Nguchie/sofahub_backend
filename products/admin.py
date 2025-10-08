@@ -135,6 +135,24 @@ class RoomCategoryAdmin(admin.ModelAdmin):
 
     product_count.short_description = 'Products'
 
+    def has_add_permission(self, request):
+        """Only superusers can add room categories"""
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        """Only superusers can change room categories"""
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        """Only superusers can delete room categories"""
+        return request.user.is_superuser
+
+    def get_readonly_fields(self, request, obj=None):
+        """Make all fields readonly for staff users"""
+        if not request.user.is_superuser:
+            return ['name', 'slug', 'description', 'image', 'order', 'is_active']
+        return []
+
 
 @admin.register(ProductType)
 class ProductTypeAdmin(admin.ModelAdmin):
@@ -148,6 +166,24 @@ class ProductTypeAdmin(admin.ModelAdmin):
         return obj.products.count()
 
     product_count.short_description = 'Products'
+
+    def has_add_permission(self, request):
+        """Only superusers can add product types"""
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        """Only superusers can change product types"""
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        """Only superusers can delete product types"""
+        return request.user.is_superuser
+
+    def get_readonly_fields(self, request, obj=None):
+        """Make all fields readonly for staff users"""
+        if not request.user.is_superuser:
+            return ['name', 'slug', 'description', 'icon', 'order', 'is_active']
+        return []
 
 
 @admin.register(Tag)
@@ -168,6 +204,24 @@ class TagAdmin(admin.ModelAdmin):
         return obj.products.count()
 
     product_count.short_description = 'Products'
+
+    def has_add_permission(self, request):
+        """Only superusers can add tags"""
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        """Only superusers can change tags"""
+        return request.user.is_superuser
+
+    def has_delete_permission(self, request, obj=None):
+        """Only superusers can delete tags"""
+        return request.user.is_superuser
+
+    def get_readonly_fields(self, request, obj=None):
+        """Make all fields readonly for staff users"""
+        if not request.user.is_superuser:
+            return ['name', 'slug', 'color_code']
+        return []
 
 
 @admin.register(Product)
