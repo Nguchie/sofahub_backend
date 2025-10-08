@@ -12,7 +12,8 @@ class OrderItemInline(admin.TabularInline):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        """Allow superusers to delete order items"""
+        return request.user.is_superuser
 
 
 @admin.register(Order)
@@ -80,7 +81,8 @@ class OrderItemAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        """Allow superusers to delete order items"""
+        return request.user.is_superuser
 
     def has_module_permission(self, request):
         """Only superusers can see order items"""

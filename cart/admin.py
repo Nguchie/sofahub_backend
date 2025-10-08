@@ -21,7 +21,8 @@ class CartItemInline(admin.TabularInline):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        """Allow superusers to delete cart items"""
+        return request.user.is_superuser
 
 
 @admin.register(Cart)
@@ -45,7 +46,8 @@ class CartAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        """Allow superusers to delete carts"""
+        return request.user.is_superuser
 
     def has_module_permission(self, request):
         """Only superusers can see carts"""
@@ -73,7 +75,8 @@ class CartItemAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        """Allow superusers to delete cart items"""
+        return request.user.is_superuser
 
     def has_module_permission(self, request):
         """Only superusers can see cart items"""

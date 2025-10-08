@@ -233,6 +233,7 @@ class ProductAdmin(admin.ModelAdmin):
     inlines = [ProductImageInline, ProductVariationInline]
     filter_horizontal = ['room_categories', 'product_types', 'tags']
     readonly_fields = ['current_price', 'is_on_sale', 'created_at', 'updated_at']
+    actions = ['delete_selected_products']
     fieldsets = [
         (None, {
             'fields': ['name', 'slug', 'description', 'is_active']
@@ -258,6 +259,18 @@ class ProductAdmin(admin.ModelAdmin):
         return obj.is_on_sale
 
     is_on_sale.boolean = True
+
+    def delete_selected_products(self, request, queryset):
+        """Custom action to delete products with proper permissions"""
+        if not request.user.is_superuser:
+            self.message_user(request, "Only superusers can delete products.", level='ERROR')
+            return
+        
+        count = queryset.count()
+        queryset.delete()
+        self.message_user(request, f"Successfully deleted {count} products and all related objects.", level='SUCCESS')
+    
+    delete_selected_products.short_description = "Delete selected products (superuser only)"
 
 
 @admin.register(ProductVariation)
