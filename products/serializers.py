@@ -44,18 +44,13 @@ class ProductImageSerializer(serializers.ModelSerializer):
             
             # Always use ID-based URL - it's more reliable
             if request:
-                url = request.build_absolute_uri(f'/api/images/{obj.id}/')
-                print(f"🔍 DEBUG ProductImageSerializer ID {obj.id}: Request context available, URL: {url}")
-                return url
+                return request.build_absolute_uri(f'/api/images/{obj.id}/')
             else:
                 from django.conf import settings
                 if settings.DEBUG:
-                    url = f"http://localhost:8000/api/images/{obj.id}/"
+                    return f"http://localhost:8000/api/images/{obj.id}/"
                 else:
-                    url = f"https://sofahubbackend-production.up.railway.app/api/images/{obj.id}/"
-                print(f"🔍 DEBUG ProductImageSerializer ID {obj.id}: No request context, URL: {url}")
-                return url
-        print(f"🔍 DEBUG ProductImageSerializer ID {obj.id}: No image field")
+                    return f"https://sofahubbackend-production.up.railway.app/api/images/{obj.id}/"
         return None
 
 
@@ -88,17 +83,6 @@ class ProductSerializer(serializers.ModelSerializer):
     is_on_sale = serializers.BooleanField(read_only=True)
     discount_percentage = serializers.SerializerMethodField()
 
-    def to_representation(self, instance):
-        """Add debug logging for images"""
-        data = super().to_representation(instance)
-        print(f"🔍 DEBUG ProductSerializer for {instance.name}:")
-        print(f"   Images count in instance: {instance.images.count()}")
-        print(f"   Images count in serialized data: {len(data.get('images', []))}")
-        
-        for i, image_data in enumerate(data.get('images', [])):
-            print(f"   Image {i+1}: ID={image_data.get('id')}, URL={image_data.get('image')}")
-        
-        return data
 
     class Meta:
         model = Product
