@@ -7,51 +7,53 @@ from .models import RoomCategory, ProductType, Tag, Product, ProductImage, Produ
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
-    extra = 3  # Show 3 empty slots for easy image addition
-    readonly_fields = ['image_preview', 'image_info']
-    fields = ['image', 'image_preview', 'image_info', 'alt_text', 'is_primary', 'order']
-    
-    # Make it easier to see and manage images
-    verbose_name = "Product Image"
-    verbose_name_plural = "📸 Product Images (Drag & Drop to Upload)"
+    extra = 1
+    readonly_fields = ['image_preview', 'image_status']
+    fields = ['image', 'image_preview', 'image_status', 'alt_text', 'is_primary', 'order']
 
     def image_preview(self, obj):
-        """Show large preview of the image"""
-        try:
-            if obj and obj.pk and obj.image:
-                from django.conf import settings
-                
-                if settings.DEBUG:
-                    base_url = "http://localhost:8000"
-                else:
-                    base_url = "https://sofahubbackend-production.up.railway.app"
-                
-                return format_html(
-                    '<img src="{}" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />',
-                    f"{base_url}/api/images/{obj.id}/"
-                )
-        except:
-            pass
-        return format_html('<span style="color: #999;">Upload to see preview</span>')
+        """Show image preview using ID-based URL"""
+        if obj.image and obj.id:
+            from django.conf import settings
+            
+            if settings.DEBUG:
+                base_url = "http://localhost:8000"
+            else:
+                base_url = "https://sofahubbackend-production.up.railway.app"
+            
+            # Always use ID-based URL for reliability
+            image_url = f"{base_url}/api/images/{obj.id}/"
+            return format_html(
+                '<img src="{}" width="100" height="100" style="object-fit: cover; border: 1px solid #ddd;" />',
+                image_url
+            )
+        return format_html('<span style="color: #999;">No image yet</span>')
 
-    image_preview.short_description = '🖼️ Preview'
-    
-    def image_info(self, obj):
-        """Show helpful information about the image"""
+    image_preview.short_description = 'Preview'
+
+    def image_status(self, obj):
+        """Show if the image file exists on filesystem"""
+        if not obj.image:
+            return format_html('<span style="color: #999;">-</span>')
+        
+        import os
+        from django.conf import settings
+        
         try:
-            if obj and obj.pk and obj.image:
-                size = obj.image.size / 1024  # KB
+            full_path = os.path.join(settings.MEDIA_ROOT, obj.image.name)
+            if os.path.exists(full_path):
+                file_size = os.path.getsize(full_path)
+                size_kb = file_size / 1024
                 return format_html(
-                    '<span style="color: #666; font-size: 11px;">Size: {:.1f} KB<br/>{} {}</span>',
-                    size,
-                    '✓' if obj.is_primary else '○',
-                    'Primary' if obj.is_primary else 'Additional'
+                    '<span style="color: green;">✓ {:.1f} KB</span>',
+                    size_kb
                 )
-        except:
-            pass
-        return format_html('<span style="color: #999;">-</span>')
-    
-    image_info.short_description = 'ℹ️ Info'
+            else:
+                return format_html('<span style="color: red;">✗ File missing</span>')
+        except Exception as e:
+            return format_html('<span style="color: orange;">? Error</span>')
+
+    image_status.short_description = 'Status'
 
 
 class ProductVariationForm(forms.ModelForm):
@@ -262,65 +264,28 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'image_count', 'base_price', 'current_price', 'is_on_sale', 'is_active', 'created_at']
+    list_display = ['name', 'base_price', 'current_price', 'is_on_sale', 'is_active', 'created_at']
     list_filter = ['room_categories', 'product_types', 'tags', 'is_active', 'created_at']
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
     inlines = [ProductImageInline, ProductVariationInline]
     filter_horizontal = ['room_categories', 'product_types', 'tags']
-    readonly_fields = ['current_price', 'is_on_sale', 'created_at', 'updated_at', 'quick_tips']
+    readonly_fields = ['current_price', 'is_on_sale', 'created_at', 'updated_at']
     fieldsets = [
         (None, {
-            'fields': ['name', 'slug', 'description', 'is_active', 'quick_tips']
+            'fields': ['name', 'slug', 'description', 'is_active']
         }),
-        ('💰 Pricing', {
-            'fields': ['base_price', 'sale_price', 'sale_start', 'sale_end', 'current_price', 'is_on_sale'],
-            'description': 'Set base price and optional sale pricing with start/end dates'
+        ('Pricing', {
+            'fields': ['base_price', 'sale_price', 'sale_start', 'sale_end', 'current_price', 'is_on_sale']
         }),
-        ('🏷️ Categorization', {
-            'fields': ['room_categories', 'product_types', 'tags'],
-            'description': 'Select relevant categories, types, and tags for the product'
+        ('Categorization', {
+            'fields': ['room_categories', 'product_types', 'tags']
         }),
-        ('📅 Timestamps', {
+        ('Timestamps', {
             'fields': ['created_at', 'updated_at'],
             'classes': ['collapse']
         })
     ]
-    
-    def quick_tips(self, obj):
-        """Show helpful tips for managing the product"""
-        if obj and obj.pk:
-            return format_html('''
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #417690;">
-                    <h3 style="margin-top: 0; color: #417690;">💡 Quick Tips</h3>
-                    <ul style="margin: 0; padding-left: 20px;">
-                        <li><strong>Images:</strong> Add at least 1 image below. Mark one as "Primary" for the main display.</li>
-                        <li><strong>Variations:</strong> Add color, size, or material options if this product has variations.</li>
-                        <li><strong>Pricing:</strong> Sale price only applies between sale start and end dates.</li>
-                        <li><strong>Changes:</strong> All changes save automatically when you click "Save" at the bottom.</li>
-                    </ul>
-                </div>
-            ''')
-        return format_html('<p style="color: #666;">Save the product first to see tips and add images.</p>')
-    
-    quick_tips.short_description = ''
-    
-    def image_count(self, obj):
-        """Show how many images this product has"""
-        try:
-            if obj and obj.pk:
-                count = obj.images.count()
-                if count == 0:
-                    return format_html('<span style="color: #dc3545;">❌ No images</span>')
-                elif count == 1:
-                    return format_html('<span style="color: #ffc107;">⚠️ 1 image</span>')
-                else:
-                    return format_html('<span style="color: #28a745;">✓ {} images</span>', count)
-        except:
-            pass
-        return format_html('<span style="color: #999;">-</span>')
-    
-    image_count.short_description = '📸 Images'
 
     def current_price(self, obj):
         return f"KSh {obj.current_price}"
@@ -365,76 +330,13 @@ class ProductVariationAdmin(admin.ModelAdmin):
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ['image_preview', 'product', 'is_primary', 'order', 'alt_text', 'image_actions']
-    list_filter = ['is_primary', 'product', 'product__room_categories']
+    list_display = ['product', 'image_preview', 'is_primary', 'order']
+    list_filter = ['is_primary', 'product']
     list_editable = ['is_primary', 'order']
-    search_fields = ['product__name', 'alt_text']
-    list_per_page = 50
-    
-    # Fields to show when editing
-    fields = ['product', 'image', 'image_preview_large', 'alt_text', 'is_primary', 'order']
-    readonly_fields = ['image_preview_large']
 
     def image_preview(self, obj):
-        """Small preview for list view"""
-        try:
-            if obj and obj.pk and obj.image:
-                from django.conf import settings
-                
-                if settings.DEBUG:
-                    base_url = "http://localhost:8000"
-                else:
-                    base_url = "https://sofahubbackend-production.up.railway.app"
-                
-                return format_html(
-                    '<img src="{}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" />',
-                    f"{base_url}/api/images/{obj.id}/"
-                )
-        except:
-            pass
-        return format_html('<span style="color: #999;">-</span>')
+        if obj.image:
+            return format_html('<img src="{}" width="50" height="50" />', obj.image.url)
+        return "No Image"
 
-    image_preview.short_description = '🖼️'
-    
-    def image_preview_large(self, obj):
-        """Large preview for detail view"""
-        try:
-            if obj and obj.pk and obj.image:
-                from django.conf import settings
-                
-                if settings.DEBUG:
-                    base_url = "http://localhost:8000"
-                else:
-                    base_url = "https://sofahubbackend-production.up.railway.app"
-                
-                return format_html(
-                    '<div style="margin: 20px 0;"><img src="{}" style="max-width: 500px; max-height: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" /></div>',
-                    f"{base_url}/api/images/{obj.id}/"
-                )
-        except:
-            pass
-        return format_html('<p style="color: #999;">No image uploaded yet</p>')
-    
-    image_preview_large.short_description = '🖼️ Image Preview'
-    
-    def image_actions(self, obj):
-        """Quick action buttons"""
-        try:
-            if obj and obj.pk and obj.image:
-                from django.conf import settings
-                
-                if settings.DEBUG:
-                    base_url = "http://localhost:8000"
-                else:
-                    base_url = "https://sofahubbackend-production.up.railway.app"
-                
-                view_url = f"{base_url}/api/images/{obj.id}/"
-                return format_html(
-                    '<a href="{}" target="_blank" style="background: #417690; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px;">👁️ View</a>',
-                    view_url
-                )
-        except:
-            pass
-        return ""
-    
-    image_actions.short_description = 'Actions'
+    image_preview.short_description = 'Preview'

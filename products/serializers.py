@@ -38,11 +38,11 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'alt_text', 'is_primary', 'order']
 
     def get_image(self, obj):
-        """Return absolute URL for the image"""
+        """Return absolute URL for the image using ID-based serving"""
         if obj.image:
             request = self.context.get('request')
             
-            # Always use ID-based URL - it's more reliable
+            # Always use ID-based URL - it's reliable and handles missing files gracefully
             if request:
                 return request.build_absolute_uri(f'/api/images/{obj.id}/')
             else:
