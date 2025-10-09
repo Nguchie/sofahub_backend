@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from core.media_views import serve_media
+from core.media_views import serve_media, serve_product_image
 
 urlpatterns = [
     path('admin/', admin.site.urls),
