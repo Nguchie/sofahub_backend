@@ -41,15 +41,31 @@ class ProductImageSerializer(serializers.ModelSerializer):
         """Return absolute URL for the image"""
         if obj.image:
             request = self.context.get('request')
+            
+            # First try the ID-based URL (more reliable)
             if request:
-                return request.build_absolute_uri(obj.image.url)
+                id_url = request.build_absolute_uri(f'/api/images/{obj.id}/')
             else:
-                # Fallback for when no request context is available
                 from django.conf import settings
                 if settings.DEBUG:
-                    return f"http://localhost:8000{obj.image.url}"
+                    id_url = f"http://localhost:8000/api/images/{obj.id}/"
                 else:
-                    return f"https://sofahubbackend-production.up.railway.app{obj.image.url}"
+                    id_url = f"https://sofahubbackend-production.up.railway.app/api/images/{obj.id}/"
+            
+            # Check if file exists, if not use ID-based URL
+            import os
+            if os.path.exists(obj.image.path):
+                if request:
+                    return request.build_absolute_uri(obj.image.url)
+                else:
+                    from django.conf import settings
+                    if settings.DEBUG:
+                        return f"http://localhost:8000{obj.image.url}"
+                    else:
+                        return f"https://sofahubbackend-production.up.railway.app{obj.image.url}"
+            else:
+                # File doesn't exist, use ID-based URL
+                return id_url
         return None
 
 

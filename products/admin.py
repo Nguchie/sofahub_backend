@@ -13,11 +13,19 @@ class ProductImageInline(admin.TabularInline):
     def image_preview(self, obj):
         if obj.image:
             from django.conf import settings
+            import os
+            
             if settings.DEBUG:
                 base_url = "http://localhost:8000"
             else:
                 base_url = "https://sofahubbackend-production.up.railway.app"
-            return format_html('<img src="{}" width="100" height="100" />', f"{base_url}{obj.image.url}")
+            
+            # Check if file exists
+            if os.path.exists(obj.image.path):
+                return format_html('<img src="{}" width="100" height="100" />', f"{base_url}{obj.image.url}")
+            else:
+                # Use ID-based URL if file doesn't exist
+                return format_html('<img src="{}" width="100" height="100" />', f"{base_url}/api/images/{obj.id}/")
         return "No Image"
 
     image_preview.short_description = 'Preview'

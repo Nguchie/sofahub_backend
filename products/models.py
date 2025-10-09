@@ -165,10 +165,13 @@ class Product(models.Model):
 
 def product_image_upload_path(instance, filename):
     """Custom upload path for product images to prevent filename conflicts"""
+    import uuid
+    import os
+    
     # Get file extension
     ext = filename.split('.')[-1]
-    # Create unique filename using product slug and timestamp
-    unique_filename = f"{instance.product.slug}_{instance.order}_{instance.id}.{ext}"
+    # Create unique filename using UUID to prevent conflicts
+    unique_filename = f"{uuid.uuid4().hex}.{ext}"
     return f'products/{unique_filename}'
 
 

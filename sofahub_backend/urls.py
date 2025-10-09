@@ -33,4 +33,5 @@ urlpatterns = [
 # Serve media files using custom view
 urlpatterns += [
     path('media/<path:path>', serve_media, name='media'),
+    path('api/images/<int:image_id>/', serve_product_image, name='product-image-by-id'),
 ]
