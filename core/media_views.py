@@ -29,6 +29,8 @@ def serve_media(request, path):
 
 def serve_product_image(request, image_id):
     """Serve product image by ID - more reliable than filename"""
+    print(f"DEBUG: serve_product_image called with ID: {image_id}")
+    
     try:
         product_image = ProductImage.objects.get(id=image_id)
         file_path = product_image.image.path
