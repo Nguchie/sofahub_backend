@@ -3,9 +3,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import FilterSet, CharFilter
 from django.db.models import Q
 from django.utils import timezone
-from django.views.decorators.cache import never_cache
-from django.utils.decorators import method_decorator
-from django.http import HttpResponse
 from .models import RoomCategory, ProductType, Tag, Product
 from .serializers import (
     RoomCategorySerializer, ProductTypeSerializer, TagSerializer,
@@ -84,14 +81,6 @@ class ProductList(generics.ListAPIView):
         context['request'] = self.request
         return context
 
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        # Add cache control headers to prevent caching
-        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response['Pragma'] = 'no-cache'
-        response['Expires'] = '0'
-        return response
-
     def get_queryset(self):
         queryset = Product.objects.filter(is_active=True)
 
@@ -136,7 +125,6 @@ class ProductList(generics.ListAPIView):
         return queryset
 
 
-@method_decorator(never_cache, name='dispatch')
 class ProductDetail(generics.RetrieveAPIView):
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
@@ -146,11 +134,3 @@ class ProductDetail(generics.RetrieveAPIView):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
-
-    def dispatch(self, request, *args, **kwargs):
-        response = super().dispatch(request, *args, **kwargs)
-        # Add cache control headers to prevent caching
-        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response['Pragma'] = 'no-cache'
-        response['Expires'] = '0'
-        return response
