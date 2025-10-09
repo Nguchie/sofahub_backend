@@ -20,6 +20,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from core.media_views import serve_media, serve_product_image
 
+# Debug: Print when URLs are loaded
+print("🔧 DEBUG: Loading URL patterns...")
+print("🔧 DEBUG: serve_product_image function:", serve_product_image)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Expose products at /api/products/ and /api/products/<slug>/
@@ -35,3 +39,6 @@ urlpatterns += [
     path('media/<path:path>', serve_media, name='media'),
     path('api/images/<int:image_id>/', serve_product_image, name='product-image-by-id'),
 ]
+
+print("🔧 DEBUG: URL patterns loaded successfully")
+print("🔧 DEBUG: Total URL patterns:", len(urlpatterns))

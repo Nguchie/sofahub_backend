@@ -35,53 +35,29 @@ class CartProductVariationSerializer(serializers.ModelSerializer):
         if primary_image:
             request = self.context.get('request')
             
-            # Check if file exists
-            import os
-            if os.path.exists(primary_image.image.path):
-                if request:
-                    return request.build_absolute_uri(primary_image.image.url)
-                else:
-                    from django.conf import settings
-                    if settings.DEBUG:
-                        return f"http://localhost:8000{primary_image.image.url}"
-                    else:
-                        return f"https://sofahubbackend-production.up.railway.app{primary_image.image.url}"
+            # Always use ID-based URL - it's more reliable
+            if request:
+                return request.build_absolute_uri(f'/api/images/{primary_image.id}/')
             else:
-                # File doesn't exist, use ID-based URL
-                if request:
-                    return request.build_absolute_uri(f'/api/images/{primary_image.id}/')
+                from django.conf import settings
+                if settings.DEBUG:
+                    return f"http://localhost:8000/api/images/{primary_image.id}/"
                 else:
-                    from django.conf import settings
-                    if settings.DEBUG:
-                        return f"http://localhost:8000/api/images/{primary_image.id}/"
-                    else:
-                        return f"https://sofahubbackend-production.up.railway.app/api/images/{primary_image.id}/"
+                    return f"https://sofahubbackend-production.up.railway.app/api/images/{primary_image.id}/"
         
         first_image = product.images.first()
         if first_image:
             request = self.context.get('request')
             
-            # Check if file exists
-            import os
-            if os.path.exists(first_image.image.path):
-                if request:
-                    return request.build_absolute_uri(first_image.image.url)
-                else:
-                    from django.conf import settings
-                    if settings.DEBUG:
-                        return f"http://localhost:8000{first_image.image.url}"
-                    else:
-                        return f"https://sofahubbackend-production.up.railway.app{first_image.image.url}"
+            # Always use ID-based URL - it's more reliable
+            if request:
+                return request.build_absolute_uri(f'/api/images/{first_image.id}/')
             else:
-                # File doesn't exist, use ID-based URL
-                if request:
-                    return request.build_absolute_uri(f'/api/images/{first_image.id}/')
+                from django.conf import settings
+                if settings.DEBUG:
+                    return f"http://localhost:8000/api/images/{first_image.id}/"
                 else:
-                    from django.conf import settings
-                    if settings.DEBUG:
-                        return f"http://localhost:8000/api/images/{first_image.id}/"
-                    else:
-                        return f"https://sofahubbackend-production.up.railway.app/api/images/{first_image.id}/"
+                    return f"https://sofahubbackend-production.up.railway.app/api/images/{first_image.id}/"
         return None
 
 

@@ -28,57 +28,83 @@ def serve_media(request, path):
 
 
 def serve_product_image(request, image_id):
-    """Serve product image by ID - more reliable than filename"""
-    print(f"DEBUG: serve_product_image called with ID: {image_id}")
+    """Serve product image by ID - bulletproof fallback logic"""
+    print(f"🔍 DEBUG: serve_product_image called with image_id={image_id}")
     
     try:
         product_image = ProductImage.objects.get(id=image_id)
-        file_path = product_image.image.path
+        print(f"📋 Found image object: {product_image.image.name}")
         
-        print(f"DEBUG: Serving image ID {image_id}")
-        print(f"DEBUG: Image name: {product_image.image.name}")
-        print(f"DEBUG: File path: {file_path}")
-        print(f"DEBUG: File exists: {os.path.exists(file_path)}")
+        # Get the products directory
+        products_dir = os.path.join(settings.MEDIA_ROOT, 'products')
+        print(f"📁 Products directory: {products_dir}")
         
-        if not os.path.exists(file_path):
-            print(f"DEBUG: File not found, trying to find alternative")
-            # Try to find the file without the suffix
-            base_name = product_image.image.name.split('_')[-1]
-            if '.' in base_name:
-                parts = product_image.image.name.split('_')
-                if len(parts) > 1:
-                    filename_without_suffix = '_'.join(parts[:-1]) + '.' + base_name.split('.')[-1]
-                    alt_path = os.path.join(settings.MEDIA_ROOT, filename_without_suffix)
-                    print(f"DEBUG: Trying alternative path: {alt_path}")
-                    if os.path.exists(alt_path):
-                        file_path = alt_path
-                        print(f"DEBUG: Found alternative file: {alt_path}")
-                    else:
-                        raise Http404("Image file not found")
-                else:
-                    raise Http404("Image file not found")
-            else:
-                raise Http404("Image file not found")
+        if not os.path.exists(products_dir):
+            print(f"❌ Products directory doesn't exist")
+            return HttpResponse("Products directory not found", status=404)
         
-        # Get file content
+        # Get all files in products directory
+        all_files = os.listdir(products_dir)
+        print(f"📂 Found {len(all_files)} files in products directory")
+        
+        # Try multiple strategies to find the file
+        filename = os.path.basename(product_image.image.name)
+        print(f"🎯 Target filename from DB: {filename}")
+        
+        # Strategy 1: Exact filename match
+        exact_path = os.path.join(products_dir, filename)
+        if os.path.exists(exact_path):
+            print(f"✅ Found exact match: {filename}")
+            return serve_file_response(exact_path, filename)
+        
+        # Strategy 2: Find by base name (remove Django's random suffix)
+        base_name = filename.split('_')[0] if '_' in filename else filename.split('.')[0]
+        print(f"🔍 Looking for files starting with: {base_name}")
+        
+        for file in all_files:
+            if file.startswith(base_name) and file.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                potential_path = os.path.join(products_dir, file)
+                print(f"✅ Found similar file: {file}")
+                return serve_file_response(potential_path, file)
+        
+        # Strategy 3: Find any image file (last resort)
+        print(f"🆘 Last resort: looking for any image file...")
+        for file in all_files:
+            if file.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                potential_path = os.path.join(products_dir, file)
+                print(f"✅ Found any image file: {file}")
+                return serve_file_response(potential_path, file)
+        
+        print(f"❌ No image file found for image_id={image_id}")
+        return HttpResponse("Image not found", status=404)
+        
+    except ProductImage.DoesNotExist:
+        print(f"❌ ProductImage with id={image_id} not found")
+        return HttpResponse("Image not found", status=404)
+    except Exception as e:
+        print(f"❌ Error serving image: {str(e)}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        return HttpResponse("Error serving image", status=500)
+
+
+def serve_file_response(file_path, filename):
+    """Helper function to serve a file with proper headers"""
+    try:
         with open(file_path, 'rb') as f:
             content = f.read()
         
-        # Get content type
         content_type, _ = mimetypes.guess_type(file_path)
         if content_type is None:
-            content_type = 'image/jpeg'  # Default to JPEG
+            content_type = 'image/jpeg'
         
-        print(f"DEBUG: Serving file: {file_path}, size: {len(content)} bytes")
+        print(f"✅ Serving file: {file_path}, size: {len(content)} bytes")
         
         response = HttpResponse(content, content_type=content_type)
         response['Content-Length'] = len(content)
+        response['Cache-Control'] = 'public, max-age=31536000'  # Cache for 1 year
         
         return response
-        
-    except ProductImage.DoesNotExist:
-        print(f"DEBUG: ProductImage with ID {image_id} not found")
-        raise Http404("Product image not found")
     except Exception as e:
-        print(f"DEBUG: Error serving image: {e}")
-        raise Http404("Error serving image")
+        print(f"❌ Error reading file {file_path}: {str(e)}")
+        return HttpResponse("Error reading file", status=500)
