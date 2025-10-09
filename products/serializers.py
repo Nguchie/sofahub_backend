@@ -46,7 +46,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(f'/api/images/{obj.id}/')
             else:
-                from django.conf import setting
+                from django.conf import settings
                 if settings.DEBUG:
                     return f"http://localhost:8000/api/images/{obj.id}/"
                 else:
