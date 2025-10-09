@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = 'Test the image fix by checking URLs and file existence'
 
     def handle(self, *args, **options):
-        self.stdout.write("🧪 TESTING IMAGE FIX")
+        self.stdout.write("🧪 TESTING IMAGE FIX - BULLETPROOF VERSION")
         self.stdout.write("=" * 50)
         
         # Get all product images
