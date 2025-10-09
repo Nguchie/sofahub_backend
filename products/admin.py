@@ -17,39 +17,39 @@ class ProductImageInline(admin.TabularInline):
 
     def image_preview(self, obj):
         """Show large preview of the image"""
-        if obj.image:
-            from django.conf import settings
-            import os
-            
-            if settings.DEBUG:
-                base_url = "http://localhost:8000"
-            else:
-                base_url = "https://sofahubbackend-production.up.railway.app"
-            
-            # Use ID-based URL for reliability
-            if obj.id:
+        try:
+            if obj and obj.pk and obj.image:
+                from django.conf import settings
+                
+                if settings.DEBUG:
+                    base_url = "http://localhost:8000"
+                else:
+                    base_url = "https://sofahubbackend-production.up.railway.app"
+                
                 return format_html(
                     '<img src="{}" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />',
                     f"{base_url}/api/images/{obj.id}/"
                 )
-        return format_html('<span style="color: #999;">No image yet</span>')
+        except:
+            pass
+        return format_html('<span style="color: #999;">Upload to see preview</span>')
 
     image_preview.short_description = '🖼️ Preview'
     
     def image_info(self, obj):
         """Show helpful information about the image"""
-        if obj.image:
-            try:
+        try:
+            if obj and obj.pk and obj.image:
                 size = obj.image.size / 1024  # KB
                 return format_html(
-                    '<span style="color: #666; font-size: 11px;">Size: {:.1f} KB<br/>{}x{} primary</span>',
+                    '<span style="color: #666; font-size: 11px;">Size: {:.1f} KB<br/>{} {}</span>',
                     size,
                     '✓' if obj.is_primary else '○',
                     'Primary' if obj.is_primary else 'Additional'
                 )
-            except:
-                return format_html('<span style="color: #666; font-size: 11px;">Image uploaded</span>')
-        return ""
+        except:
+            pass
+        return format_html('<span style="color: #999;">-</span>')
     
     image_info.short_description = 'ℹ️ Info'
 
@@ -289,29 +289,36 @@ class ProductAdmin(admin.ModelAdmin):
     
     def quick_tips(self, obj):
         """Show helpful tips for managing the product"""
-        return format_html('''
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #417690;">
-                <h3 style="margin-top: 0; color: #417690;">💡 Quick Tips</h3>
-                <ul style="margin: 0; padding-left: 20px;">
-                    <li><strong>Images:</strong> Add at least 1 image below. Mark one as "Primary" for the main display.</li>
-                    <li><strong>Variations:</strong> Add color, size, or material options if this product has variations.</li>
-                    <li><strong>Pricing:</strong> Sale price only applies between sale start and end dates.</li>
-                    <li><strong>Changes:</strong> All changes save automatically when you click "Save" at the bottom.</li>
-                </ul>
-            </div>
-        ''')
+        if obj and obj.pk:
+            return format_html('''
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #417690;">
+                    <h3 style="margin-top: 0; color: #417690;">💡 Quick Tips</h3>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li><strong>Images:</strong> Add at least 1 image below. Mark one as "Primary" for the main display.</li>
+                        <li><strong>Variations:</strong> Add color, size, or material options if this product has variations.</li>
+                        <li><strong>Pricing:</strong> Sale price only applies between sale start and end dates.</li>
+                        <li><strong>Changes:</strong> All changes save automatically when you click "Save" at the bottom.</li>
+                    </ul>
+                </div>
+            ''')
+        return format_html('<p style="color: #666;">Save the product first to see tips and add images.</p>')
     
     quick_tips.short_description = ''
     
     def image_count(self, obj):
         """Show how many images this product has"""
-        count = obj.images.count()
-        if count == 0:
-            return format_html('<span style="color: #dc3545;">❌ No images</span>')
-        elif count == 1:
-            return format_html('<span style="color: #ffc107;">⚠️ 1 image</span>')
-        else:
-            return format_html('<span style="color: #28a745;">✓ {} images</span>', count)
+        try:
+            if obj and obj.pk:
+                count = obj.images.count()
+                if count == 0:
+                    return format_html('<span style="color: #dc3545;">❌ No images</span>')
+                elif count == 1:
+                    return format_html('<span style="color: #ffc107;">⚠️ 1 image</span>')
+                else:
+                    return format_html('<span style="color: #28a745;">✓ {} images</span>', count)
+        except:
+            pass
+        return format_html('<span style="color: #999;">-</span>')
     
     image_count.short_description = '📸 Images'
 
@@ -328,12 +335,6 @@ class ProductAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         """Only superusers can delete products"""
         return request.user.is_superuser
-    
-    class Media:
-        css = {
-            'all': ('admin/css/product_admin.css',)
-        }
-        js = ('admin/js/product_admin.js',)
 
 
 @admin.register(ProductVariation)
@@ -376,58 +377,64 @@ class ProductImageAdmin(admin.ModelAdmin):
 
     def image_preview(self, obj):
         """Small preview for list view"""
-        if obj.image:
-            from django.conf import settings
-            
-            if settings.DEBUG:
-                base_url = "http://localhost:8000"
-            else:
-                base_url = "https://sofahubbackend-production.up.railway.app"
-            
-            if obj.id:
+        try:
+            if obj and obj.pk and obj.image:
+                from django.conf import settings
+                
+                if settings.DEBUG:
+                    base_url = "http://localhost:8000"
+                else:
+                    base_url = "https://sofahubbackend-production.up.railway.app"
+                
                 return format_html(
                     '<img src="{}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" />',
                     f"{base_url}/api/images/{obj.id}/"
                 )
-        return format_html('<span style="color: #999;">❌</span>')
+        except:
+            pass
+        return format_html('<span style="color: #999;">-</span>')
 
     image_preview.short_description = '🖼️'
     
     def image_preview_large(self, obj):
         """Large preview for detail view"""
-        if obj.image:
-            from django.conf import settings
-            
-            if settings.DEBUG:
-                base_url = "http://localhost:8000"
-            else:
-                base_url = "https://sofahubbackend-production.up.railway.app"
-            
-            if obj.id:
+        try:
+            if obj and obj.pk and obj.image:
+                from django.conf import settings
+                
+                if settings.DEBUG:
+                    base_url = "http://localhost:8000"
+                else:
+                    base_url = "https://sofahubbackend-production.up.railway.app"
+                
                 return format_html(
                     '<div style="margin: 20px 0;"><img src="{}" style="max-width: 500px; max-height: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" /></div>',
                     f"{base_url}/api/images/{obj.id}/"
                 )
-        return format_html('<p style="color: #999;">No image uploaded</p>')
+        except:
+            pass
+        return format_html('<p style="color: #999;">No image uploaded yet</p>')
     
     image_preview_large.short_description = '🖼️ Image Preview'
     
     def image_actions(self, obj):
         """Quick action buttons"""
-        if obj.image:
-            from django.conf import settings
-            
-            if settings.DEBUG:
-                base_url = "http://localhost:8000"
-            else:
-                base_url = "https://sofahubbackend-production.up.railway.app"
-            
-            if obj.id:
+        try:
+            if obj and obj.pk and obj.image:
+                from django.conf import settings
+                
+                if settings.DEBUG:
+                    base_url = "http://localhost:8000"
+                else:
+                    base_url = "https://sofahubbackend-production.up.railway.app"
+                
                 view_url = f"{base_url}/api/images/{obj.id}/"
                 return format_html(
                     '<a href="{}" target="_blank" style="background: #417690; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px;">👁️ View</a>',
                     view_url
                 )
+        except:
+            pass
         return ""
     
     image_actions.short_description = 'Actions'
