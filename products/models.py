@@ -163,9 +163,18 @@ class Product(models.Model):
             print(f"❌ Error updating On Sale tag for {self.name}: {e}")
 
 
+def product_image_upload_path(instance, filename):
+    """Custom upload path for product images to prevent filename conflicts"""
+    # Get file extension
+    ext = filename.split('.')[-1]
+    # Create unique filename using product slug and timestamp
+    unique_filename = f"{instance.product.slug}_{instance.order}_{instance.id}.{ext}"
+    return f'products/{unique_filename}'
+
+
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
+    image = models.ImageField(upload_to=product_image_upload_path)
     alt_text = models.CharField(max_length=100, blank=True)
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
