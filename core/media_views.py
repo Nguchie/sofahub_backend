@@ -67,6 +67,15 @@ def serve_product_image(request, image_id):
                 print(f"✅ Found similar file: {file}")
                 return serve_file_response(potential_path, file)
         
+        # Strategy 2.5: Try to find files with similar pattern (for test-product files)
+        if 'test-product' in filename:
+            print(f"🔍 Looking for test-product files...")
+            for file in all_files:
+                if 'test' in file.lower() and file.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                    potential_path = os.path.join(products_dir, file)
+                    print(f"✅ Found test file: {file}")
+                    return serve_file_response(potential_path, file)
+        
         # Strategy 3: Find any image file (last resort)
         print(f"🆘 Last resort: looking for any image file...")
         for file in all_files:
