@@ -77,11 +77,29 @@ class ProductSerializer(serializers.ModelSerializer):
     room_categories = RoomCategorySerializer(many=True, read_only=True)
     product_types = ProductTypeSerializer(many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    images = ProductImageSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField()
     variations = ProductVariationSerializer(many=True, read_only=True)
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
     discount_percentage = serializers.SerializerMethodField()
+
+    def get_images(self, obj):
+        """Return all images ordered by order field, then by id"""
+        images = obj.images.all().order_by('order', 'id')
+        serializer = ProductImageSerializer(images, many=True, context=self.context)
+        
+        # Add metadata to help frontend with gallery display
+        image_data = serializer.data
+        total_images = len(image_data)
+        
+        # Add index to each image for frontend navigation
+        for i, img in enumerate(image_data):
+            img['index'] = i
+            img['is_first'] = (i == 0)
+            img['is_last'] = (i == total_images - 1)
+            img['total_count'] = total_images
+        
+        return image_data
 
 
     class Meta:

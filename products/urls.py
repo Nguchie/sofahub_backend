@@ -12,4 +12,5 @@ urlpatterns = [
     # Mount list/detail at base so final URLs are /api/products/ and /api/products/<slug>/
     path('', views.ProductList.as_view(), name='product-list'),
     path('<slug:slug>/', views.ProductDetail.as_view(), name='product-detail'),
+    path('<slug:slug>/images/', views.product_images, name='product-images'),
 ]
