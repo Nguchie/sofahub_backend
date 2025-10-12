@@ -1,14 +1,85 @@
-from rest_framework import generics, status
+from rest_framework import generics, filters, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import FilterSet, CharFilter
 from django.db.models import Q
-from .models import Product, ProductImage
-from .serializers import ProductSerializer, ProductListSerializer, ProductImageSerializer
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from .models import RoomCategory, ProductType, Tag, Product, ProductImage
+from .serializers import (
+    RoomCategorySerializer, ProductTypeSerializer, TagSerializer,
+    ProductSerializer, ProductListSerializer, ProductImageSerializer
+)
+from core.permissions import IsAdminOrReadOnly
+
+
+class ProductFilterSet(FilterSet):
+    """Custom filter set to handle tag slugs instead of IDs"""
+    tags = CharFilter(method='filter_tags_by_slug')
+
+    class Meta:
+        model = Product
+        fields = ['room_categories', 'product_types', 'tags']
+
+    def filter_tags_by_slug(self, queryset, name, value):
+        """Filter products by tag slugs instead of IDs"""
+        if value:
+            tag_slugs = [slug.strip() for slug in value.split(',') if slug.strip()]
+            if tag_slugs:
+                return queryset.filter(tags__slug__in=tag_slugs).distinct()
+        return queryset
+
+
+class RoomCategoryList(generics.ListCreateAPIView):
+    queryset = RoomCategory.objects.all()
+    serializer_class = RoomCategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name']
+    ordering = ['name']
+
+
+class ProductTypeList(generics.ListCreateAPIView):
+    queryset = ProductType.objects.all()
+    serializer_class = ProductTypeSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name']
+    ordering = ['name']
+
+
+class ProductTypesByRoomView(generics.ListAPIView):
+    """Get all product types for a specific room category"""
+    serializer_class = ProductTypeSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        room_slug = self.kwargs['room_slug']
+        return ProductType.objects.filter(
+            room_categories__slug=room_slug
+        ).distinct()
+
+
+class TagList(generics.ListCreateAPIView):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name']
+    ordering = ['name']
 
 
 class ProductList(generics.ListAPIView):
     serializer_class = ProductListSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ProductFilterSet
+    search_fields = ['name', 'description', 'tags__name']
+    ordering_fields = ['name', 'current_price', 'created_at']
+    ordering = ['-created_at']
     lookup_field = 'slug'
 
     def get_queryset(self):
