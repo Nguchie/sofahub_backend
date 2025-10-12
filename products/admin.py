@@ -33,14 +33,16 @@ class ProductImageInline(admin.TabularInline):
 
     def image_status(self, obj):
         """Show if the image file exists on filesystem"""
-        if not obj.image:
+        if not obj.image or not obj.image.name:
             return format_html('<span style="color: #999;">-</span>')
         
         import os
         from django.conf import settings
         
         try:
+            # Use the image name directly instead of obj.image.path
             full_path = os.path.join(settings.MEDIA_ROOT, obj.image.name)
+            
             if os.path.exists(full_path):
                 file_size = os.path.getsize(full_path)
                 size_kb = file_size / 1024
@@ -50,8 +52,13 @@ class ProductImageInline(admin.TabularInline):
                 )
             else:
                 return format_html('<span style="color: red;">✗ File missing</span>')
+                
         except Exception as e:
-            return format_html('<span style="color: orange;">? Error</span>')
+            # More detailed error for debugging
+            return format_html(
+                '<span style="color: orange;">? Error: {}</span>',
+                str(e)[:20]  # Show first 20 chars of error
+            )
 
     image_status.short_description = 'Status'
 
