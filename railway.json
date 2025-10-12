@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python manage.py migrate && python manage.py cleanup_images && python manage.py verify_images && python manage.py collectstatic --noinput && gunicorn sofahub_backend.wsgi:application --bind 0.0.0.0:$PORT",
+    "startCommand": "python manage.py migrate && python manage.py cleanup_images && python manage.py verify_images && python manage.py debug_admin_status && python manage.py collectstatic --noinput && gunicorn sofahub_backend.wsgi:application --bind 0.0.0.0:$PORT",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
