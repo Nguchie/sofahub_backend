@@ -40,17 +40,9 @@ class ProductImageSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         """Return absolute URL for the image using ID-based serving"""
         if obj.image:
+            from core.utils import get_image_url
             request = self.context.get('request')
-            
-            # Always use ID-based URL - it's reliable and handles missing files gracefully
-            if request:
-                return request.build_absolute_uri(f'/api/images/{obj.id}/')
-            else:
-                from django.conf import settings
-                if settings.DEBUG:
-                    return f"http://localhost:8000/api/images/{obj.id}/"
-                else:
-                    return f"https://sofahubbackend-production.up.railway.app/api/images/{obj.id}/"
+            return get_image_url(obj.id, request)
         return None
 
 

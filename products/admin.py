@@ -14,15 +14,8 @@ class ProductImageInline(admin.TabularInline):
     def image_preview(self, obj):
         """Show image preview using ID-based URL"""
         if obj.image and obj.id:
-            from django.conf import settings
-            
-            if settings.DEBUG:
-                base_url = "http://localhost:8000"
-            else:
-                base_url = "https://sofahubbackend-production.up.railway.app"
-            
-            # Always use ID-based URL for reliability
-            image_url = f"{base_url}/api/images/{obj.id}/"
+            from core.utils import get_image_url
+            image_url = get_image_url(obj.id)
             return format_html(
                 '<img src="{}" width="100" height="100" style="object-fit: cover; border: 1px solid #ddd;" />',
                 image_url
@@ -342,8 +335,10 @@ class ProductImageAdmin(admin.ModelAdmin):
     list_editable = ['is_primary', 'order']
 
     def image_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" width="50" height="50" />', obj.image.url)
+        if obj.image and obj.id:
+            from core.utils import get_image_url
+            image_url = get_image_url(obj.id)
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', image_url)
         return "No Image"
 
     image_preview.short_description = 'Preview'

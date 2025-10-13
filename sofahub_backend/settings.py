@@ -31,9 +31,10 @@ DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,sofahubbackend-production.up.railway.app').split(',')
 
 # Django Superuser Configuration for Railway deployment
-DJANGO_SUPERUSER_USERNAME = os.environ['DJANGO_SUPERUSER_USERNAME']
-DJANGO_SUPERUSER_EMAIL = os.environ['DJANGO_SUPERUSER_EMAIL']
-DJANGO_SUPERUSER_PASSWORD = os.environ['DJANGO_SUPERUSER_PASSWORD']
+# Use .get() with defaults for local development, but these should be set in production
+DJANGO_SUPERUSER_USERNAME = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
+DJANGO_SUPERUSER_EMAIL = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@example.com')
+DJANGO_SUPERUSER_PASSWORD = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'changeme123')
 
 # Application definition
 
@@ -201,6 +202,9 @@ SESSION_COOKIE_NAME = 'sofahub_session'
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Site URL configuration - for generating absolute URLs
+SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000' if DEBUG else 'https://sofahubbackend-production.up.railway.app')
 
 
 # Email Configuration

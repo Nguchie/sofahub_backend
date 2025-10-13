@@ -78,9 +78,15 @@ class ProductList(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilterSet
     search_fields = ['name', 'description', 'tags__name']
-    ordering_fields = ['name', 'current_price', 'created_at']
+    ordering_fields = ['name', 'base_price', 'created_at']  # Using base_price since current_price is a property
     ordering = ['-created_at']
     lookup_field = 'slug'
+
+    def get_serializer_context(self):
+        """Ensure request context is passed to serializers"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
     def get_queryset(self):
         queryset = Product.objects.filter(is_active=True).prefetch_related('images', 'variations')
@@ -110,22 +116,23 @@ class ProductList(generics.ListAPIView):
             tag_list = tags.split(',')
             queryset = queryset.filter(tags__slug__in=tag_list).distinct()
 
-        # Price range filter
+        # Price range filter - uses base_price since current_price is a property
+        # Note: This doesn't account for sale prices in filtering
         min_price = self.request.query_params.get('min_price', None)
         max_price = self.request.query_params.get('max_price', None)
 
         if min_price:
-            queryset = queryset.filter(current_price__gte=min_price)
+            queryset = queryset.filter(base_price__gte=min_price)
 
         if max_price:
-            queryset = queryset.filter(current_price__lte=max_price)
+            queryset = queryset.filter(base_price__lte=max_price)
 
-        # Sort by price
+        # Sort by price - uses base_price since current_price is a property
         sort_by = self.request.query_params.get('sort', None)
         if sort_by == 'price_low':
-            queryset = queryset.order_by('current_price')
+            queryset = queryset.order_by('base_price')
         elif sort_by == 'price_high':
-            queryset = queryset.order_by('-current_price')
+            queryset = queryset.order_by('-base_price')
         elif sort_by == 'newest':
             queryset = queryset.order_by('-created_at')
         elif sort_by == 'name':

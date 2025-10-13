@@ -30,34 +30,21 @@ class CartProductVariationSerializer(serializers.ModelSerializer):
 
     def get_product_image(self, obj):
         """Get the primary image of the product"""
+        from core.utils import get_image_url
+        
         product = obj.product
+        request = self.context.get('request')
+        
+        # Try primary image first
         primary_image = product.images.filter(is_primary=True).first()
         if primary_image:
-            request = self.context.get('request')
-            
-            # Always use ID-based URL - it's more reliable
-            if request:
-                return request.build_absolute_uri(f'/api/images/{primary_image.id}/')
-            else:
-                from django.conf import settings
-                if settings.DEBUG:
-                    return f"http://localhost:8000/api/images/{primary_image.id}/"
-                else:
-                    return f"https://sofahubbackend-production.up.railway.app/api/images/{primary_image.id}/"
+            return get_image_url(primary_image.id, request)
         
+        # Fallback to first image
         first_image = product.images.first()
         if first_image:
-            request = self.context.get('request')
-            
-            # Always use ID-based URL - it's more reliable
-            if request:
-                return request.build_absolute_uri(f'/api/images/{first_image.id}/')
-            else:
-                from django.conf import settings
-                if settings.DEBUG:
-                    return f"http://localhost:8000/api/images/{first_image.id}/"
-                else:
-                    return f"https://sofahubbackend-production.up.railway.app/api/images/{first_image.id}/"
+            return get_image_url(first_image.id, request)
+        
         return None
 
 
