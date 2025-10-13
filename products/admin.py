@@ -40,8 +40,8 @@ class ProductImageInline(admin.TabularInline):
                 file_size = os.path.getsize(full_path)
                 size_kb = file_size / 1024
                 return format_html(
-                    '<span style="color: green;">✓ {} KB</span>',
-                    round(size_kb, 1)
+                    '<span style="color: green;">✓ {:.1f} KB</span>',
+                    size_kb
                 )
             else:
                 return format_html('<span style="color: red;">✗ File missing</span>')

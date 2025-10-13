@@ -126,12 +126,18 @@ class ProductListSerializer(serializers.ModelSerializer):
         return obj.discount_percentage
 
     def get_primary_image(self, obj):
-        primary_image = obj.images.filter(is_primary=True).first()
-        if primary_image:
-            serializer = ProductImageSerializer(primary_image, context=self.context)
+        # Use prefetched images to avoid N+1 queries
+        images = obj.images.all()  # Uses prefetch_related from view
+        
+        # Find primary image in Python (no new query)
+        for img in images:
+            if img.is_primary:
+                serializer = ProductImageSerializer(img, context=self.context)
+                return serializer.data
+        
+        # Fallback to first image
+        if images:
+            serializer = ProductImageSerializer(images[0], context=self.context)
             return serializer.data
-        first_image = obj.images.first()
-        if first_image:
-            serializer = ProductImageSerializer(first_image, context=self.context)
-            return serializer.data
+        
         return None

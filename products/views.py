@@ -58,8 +58,11 @@ class ProductTypesByRoomView(generics.ListAPIView):
 
     def get_queryset(self):
         room_slug = self.kwargs['room_slug']
+        # Get product types through products (not direct relationship)
+        # Get all products in this room category, then get their types
         return ProductType.objects.filter(
-            room_categories__slug=room_slug
+            products__room_categories__slug=room_slug,
+            is_active=True
         ).distinct()
 
 
@@ -78,7 +81,7 @@ class ProductList(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilterSet
     search_fields = ['name', 'description', 'tags__name']
-    ordering_fields = ['name', 'base_price', 'created_at']  # Using base_price since current_price is a property
+    ordering_fields = ['name', 'base_price', 'created_at']
     ordering = ['-created_at']
     lookup_field = 'slug'
 
@@ -116,8 +119,7 @@ class ProductList(generics.ListAPIView):
             tag_list = tags.split(',')
             queryset = queryset.filter(tags__slug__in=tag_list).distinct()
 
-        # Price range filter - uses base_price since current_price is a property
-        # Note: This doesn't account for sale prices in filtering
+        # Price range filter
         min_price = self.request.query_params.get('min_price', None)
         max_price = self.request.query_params.get('max_price', None)
 
@@ -127,7 +129,7 @@ class ProductList(generics.ListAPIView):
         if max_price:
             queryset = queryset.filter(base_price__lte=max_price)
 
-        # Sort by price - uses base_price since current_price is a property
+        # Sort by price
         sort_by = self.request.query_params.get('sort', None)
         if sort_by == 'price_low':
             queryset = queryset.order_by('base_price')

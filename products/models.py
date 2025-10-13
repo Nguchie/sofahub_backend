@@ -187,6 +187,21 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+    
+    def clean(self):
+        """Validate image before saving"""
+        if self.image:
+            from core.utils import validate_product_image
+            try:
+                validate_product_image(self.image)
+            except Exception as e:
+                from django.core.exceptions import ValidationError
+                raise ValidationError({'image': str(e)})
+    
+    def save(self, *args, **kwargs):
+        """Override save to call full_clean() for validation"""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class ProductVariation(models.Model):
