@@ -38,20 +38,17 @@ class ProductImageInline(admin.TabularInline):
             
             if os.path.exists(full_path):
                 file_size = os.path.getsize(full_path)
-                size_kb = file_size / 1024
+                size_kb = round(file_size / 1024, 1)
                 return format_html(
-                    '<span style="color: green;">✓ {:.1f} KB</span>',
+                    '<span style="color: green;">✓ {} KB</span>',
                     size_kb
                 )
             else:
                 return format_html('<span style="color: red;">✗ File missing</span>')
                 
         except Exception as e:
-            # More detailed error for debugging
-            return format_html(
-                '<span style="color: orange;">? Error: {}</span>',
-                str(e)[:20]  # Show first 20 chars of error
-            )
+            # Simplified error display
+            return format_html('<span style="color: orange;">? Error</span>')
 
     image_status.short_description = 'Status'
 
