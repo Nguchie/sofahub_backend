@@ -8,8 +8,8 @@ from .models import RoomCategory, ProductType, Tag, Product, ProductImage, Produ
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
-    readonly_fields = ['image_preview', 'image_status']
-    fields = ['image', 'image_preview', 'image_status', 'alt_text', 'is_primary', 'order']
+    readonly_fields = ['image_preview']
+    fields = ['image', 'image_preview', 'alt_text', 'is_primary', 'order']
 
     def image_preview(self, obj):
         """Show image preview using ID-based URL"""
@@ -23,34 +23,6 @@ class ProductImageInline(admin.TabularInline):
         return format_html('<span style="color: #999;">No image yet</span>')
 
     image_preview.short_description = 'Preview'
-
-    def image_status(self, obj):
-        """Show if the image file exists on filesystem"""
-        if not obj.image or not obj.image.name:
-            return format_html('<span style="color: #999;">-</span>')
-        
-        import os
-        from django.conf import settings
-        
-        try:
-            # Use the image name directly instead of obj.image.path
-            full_path = os.path.join(settings.MEDIA_ROOT, obj.image.name)
-            
-            if os.path.exists(full_path):
-                file_size = os.path.getsize(full_path)
-                size_kb = round(file_size / 1024, 1)
-                return format_html(
-                    '<span style="color: green;">✓ {} KB</span>',
-                    size_kb
-                )
-            else:
-                return format_html('<span style="color: red;">✗ File missing</span>')
-                
-        except Exception as e:
-            # Simplified error display
-            return format_html('<span style="color: orange;">? Error</span>')
-
-    image_status.short_description = 'Status'
 
 
 class ProductVariationForm(forms.ModelForm):
