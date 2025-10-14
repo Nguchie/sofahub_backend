@@ -26,13 +26,22 @@ class RoomCategory(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         
-        # Optimize category image if enabled and present
-        if self.image and getattr(settings, 'ENABLE_IMAGE_OPTIMIZATION', False):
-            from core.utils import optimize_image, validate_product_image
+        # Handle category image optimization based on mode
+        if self.image:
+            from core.utils import optimize_image, optimize_image_async, optimize_image_storage
+            optimization_mode = getattr(settings, 'IMAGE_OPTIMIZATION_MODE', 'storage')
+            
             try:
-                validate_product_image(self.image)
-                # Optimize category images (max 1200px, quality 85)
-                self.image = optimize_image(self.image, max_width=1200, max_height=1200, quality=85)
+                if optimization_mode == 'storage':
+                    # Storage-efficient optimization (saves space, fast)
+                    self.image = optimize_image_storage(self.image, max_width=1200, max_height=1200, quality=75)
+                elif optimization_mode == 'sync':
+                    # Immediate optimization (may be slow)
+                    self.image = optimize_image(self.image, max_width=1200, max_height=1200, quality=85)
+                elif optimization_mode == 'async':
+                    # Background optimization (fast upload)
+                    self.image = optimize_image_async(self.image, max_width=1200, max_height=1200, quality=85)
+                # If 'false' or any other value, no optimization
             except Exception as e:
                 print(f"⚠️ Category image optimization failed: {e}")
         
@@ -212,15 +221,25 @@ class ProductImage(models.Model):
     
     def save(self, *args, **kwargs):
         """Override save to optimize image and call validation"""
-        # Validate first
+        # Always validate (fast security checks)
         self.full_clean()
         
-        # Optimize image if enabled and it's a new upload
-        if self.image and getattr(settings, 'ENABLE_IMAGE_OPTIMIZATION', False):
-            from core.utils import optimize_image
+        # Handle image optimization based on mode
+        if self.image:
+            from core.utils import optimize_image, optimize_image_async, optimize_image_storage
+            optimization_mode = getattr(settings, 'IMAGE_OPTIMIZATION_MODE', 'storage')
+            
             try:
-                # Optimize product images (max 2000px, quality 85)
-                self.image = optimize_image(self.image, max_width=2000, max_height=2000, quality=85)
+                if optimization_mode == 'storage':
+                    # Storage-efficient optimization (saves space, fast)
+                    self.image = optimize_image_storage(self.image, max_width=2000, max_height=2000, quality=75)
+                elif optimization_mode == 'sync':
+                    # Immediate optimization (may be slow)
+                    self.image = optimize_image(self.image, max_width=2000, max_height=2000, quality=85)
+                elif optimization_mode == 'async':
+                    # Background optimization (fast upload)
+                    self.image = optimize_image_async(self.image, max_width=2000, max_height=2000, quality=85)
+                # If 'false' or any other value, no optimization
             except Exception as e:
                 print(f"⚠️ Failed to optimize image: {e}")
         

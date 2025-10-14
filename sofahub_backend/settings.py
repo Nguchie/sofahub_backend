@@ -193,11 +193,15 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
 ]
 
-# Image optimization settings
-# ENABLE_IMAGE_OPTIMIZATION: Set to 'true' to enable lightweight image processing
-# Note: Even with optimization enabled, processing is now much faster and shouldn't timeout
-# Default: 'false' (disabled) to prevent any potential timeout issues
-ENABLE_IMAGE_OPTIMIZATION = os.getenv('ENABLE_IMAGE_OPTIMIZATION', 'False').lower() == 'true'
+# Image processing settings - storage-efficient approach for production
+# IMAGE_OPTIMIZATION_MODE: 'storage' (compress for storage), 'sync' (immediate), 'async' (background), 'false' (disabled)
+# Default: 'storage' - compresses images to save storage costs while being fast
+IMAGE_OPTIMIZATION_MODE = os.getenv('IMAGE_OPTIMIZATION_MODE', 'storage').lower()
+
+# Image validation settings
+# ENABLE_HEAVY_VALIDATION: Set to 'true' to enable full image verification (slower but more secure)
+# Default: 'false' in production, 'true' in development
+ENABLE_HEAVY_VALIDATION = os.getenv('ENABLE_HEAVY_VALIDATION', str(DEBUG)).lower() == 'true'
 
 
 

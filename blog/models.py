@@ -89,14 +89,22 @@ class BlogPost(models.Model):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
         
-        # Optimize featured image if enabled and present
-        if self.featured_image and getattr(settings, 'ENABLE_IMAGE_OPTIMIZATION', False):
-            from core.utils import optimize_image, validate_blog_image
+        # Handle featured image optimization based on mode
+        if self.featured_image:
+            from core.utils import optimize_image, optimize_image_async, optimize_image_storage
+            optimization_mode = getattr(settings, 'IMAGE_OPTIMIZATION_MODE', 'storage')
+            
             try:
-                # Validate first
-                validate_blog_image(self.featured_image)
-                # Optimize blog images (max 1920px, quality 85)
-                self.featured_image = optimize_image(self.featured_image, max_width=1920, max_height=1920, quality=85)
+                if optimization_mode == 'storage':
+                    # Storage-efficient optimization (saves space, fast)
+                    self.featured_image = optimize_image_storage(self.featured_image, max_width=1920, max_height=1920, quality=75)
+                elif optimization_mode == 'sync':
+                    # Immediate optimization (may be slow)
+                    self.featured_image = optimize_image(self.featured_image, max_width=1920, max_height=1920, quality=85)
+                elif optimization_mode == 'async':
+                    # Background optimization (fast upload)
+                    self.featured_image = optimize_image_async(self.featured_image, max_width=1920, max_height=1920, quality=85)
+                # If 'false' or any other value, no optimization
             except Exception as e:
                 print(f"⚠️ Blog image optimization failed: {e}")
         
