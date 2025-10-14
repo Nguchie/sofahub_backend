@@ -224,15 +224,40 @@ class ProductTypeAdmin(admin.ModelAdmin):
         return []
 
 
+class TagAdminForm(forms.ModelForm):
+    """Custom form for Tag with color picker"""
+    class Meta:
+        model = Tag
+        fields = '__all__'
+        widgets = {
+            'color_code': forms.TextInput(attrs={
+                'type': 'color',
+                'style': 'width: 100px; height: 40px; cursor: pointer;',
+                'title': 'Click to choose a color'
+            }),
+        }
+
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+    form = TagAdminForm
     list_display = ['name', 'slug', 'color_display', 'product_count']
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ['name']
+    
+    fieldsets = (
+        ('Tag Information', {
+            'fields': ('name', 'slug'),
+        }),
+        ('Display Settings', {
+            'fields': ('color_code',),
+            'description': 'Click the color box below to choose a color visually'
+        }),
+    )
 
     def color_display(self, obj):
         return format_html(
-            '<div style="width: 20px; height: 20px; background-color: {}; border: 1px solid #000;"></div>',
+            '<div style="width: 30px; height: 30px; background-color: {}; border: 2px solid #ddd; border-radius: 4px;"></div>',
             obj.color_code
         )
 
