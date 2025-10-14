@@ -57,48 +57,93 @@ class ProductImageInline(admin.TabularInline):
 
 
 class ProductVariationForm(forms.ModelForm):
-    """User-friendly form for product variations"""
-    COLOR_CHOICES = [
-        ('', '---------'),
-        ('red', 'Red'),
-        ('blue', 'Blue'),
-        ('green', 'Green'),
-        ('black', 'Black'),
-        ('white', 'White'),
-        ('brown', 'Brown'),
-        ('gray', 'Gray'),
-        ('beige', 'Beige'),
-        ('navy', 'Navy Blue'),
-        ('charcoal', 'Charcoal'),
+    """User-friendly form for product variations with autocomplete suggestions"""
+    
+    # Common furniture colors (as suggestions, not restrictions)
+    COLOR_SUGGESTIONS = [
+        'Black', 'White', 'Gray', 'Charcoal', 'Silver',
+        'Brown', 'Tan', 'Beige', 'Cream', 'Ivory',
+        'Red', 'Burgundy', 'Maroon',
+        'Blue', 'Navy', 'Teal', 'Turquoise',
+        'Green', 'Olive', 'Sage',
+        'Yellow', 'Gold', 'Mustard',
+        'Orange', 'Rust', 'Terracotta',
+        'Purple', 'Plum', 'Lavender',
+        'Pink', 'Rose', 'Blush',
+        'Walnut', 'Oak', 'Cherry', 'Mahogany', 'Espresso',
+        'Natural Wood', 'Light Wood', 'Dark Wood',
+        'Multi-Color', 'Patterned', 'Two-Tone'
     ]
-
-    MATERIAL_CHOICES = [
-        ('', '---------'),
-        ('leather', 'Leather'),
-        ('fabric', 'Fabric'),
-        ('wood', 'Wood'),
-        ('metal', 'Metal'),
-        ('plastic', 'Plastic'),
-        ('glass', 'Glass'),
-        ('marble', 'Marble'),
-        ('rattan', 'Rattan'),
+    
+    # Common furniture materials
+    MATERIAL_SUGGESTIONS = [
+        'Leather', 'Genuine Leather', 'Bonded Leather', 'Faux Leather',
+        'Fabric', 'Linen', 'Cotton', 'Velvet', 'Microfiber', 'Suede',
+        'Wood', 'Solid Wood', 'Oak', 'Pine', 'Walnut', 'Teak', 'Mahogany',
+        'Engineered Wood', 'MDF', 'Plywood', 'Particle Board',
+        'Metal', 'Steel', 'Aluminum', 'Iron', 'Brass', 'Chrome',
+        'Glass', 'Tempered Glass', 'Frosted Glass',
+        'Marble', 'Granite', 'Quartz',
+        'Rattan', 'Wicker', 'Bamboo', 'Cane',
+        'Plastic', 'Acrylic', 'Resin',
+        'Upholstered', 'Foam', 'Memory Foam',
+        'Mixed Materials', 'Wood & Metal', 'Fabric & Wood'
     ]
-
-    SIZE_CHOICES = [
-        ('', '---------'),
-        ('small', 'Small'),
-        ('medium', 'Medium'),
-        ('large', 'Large'),
-        ('king', 'King Size'),
-        ('queen', 'Queen Size'),
-        ('single', 'Single'),
-        ('double', 'Double'),
+    
+    # Common furniture sizes
+    SIZE_SUGGESTIONS = [
+        # Bed sizes
+        'King Size', 'Queen Size', 'Full/Double', 'Twin/Single', 'California King',
+        # General sizes
+        'Small', 'Medium', 'Large', 'Extra Large',
+        # Seating
+        '2-Seater', '3-Seater', '4-Seater', '5-Seater', 'L-Shape', 'U-Shape',
+        # Tables
+        '4-Person', '6-Person', '8-Person', '10-Person', '12-Person',
+        # Dimensions (examples)
+        '120cm', '150cm', '180cm', '200cm', '240cm',
+        # Storage
+        '2-Door', '3-Door', '4-Door', '5-Drawer', '6-Drawer',
+        # Other
+        'Compact', 'Standard', 'Oversized', 'Custom Size'
     ]
-
-    # Form fields instead of JSON
-    color = forms.ChoiceField(choices=COLOR_CHOICES, required=False, help_text="Select color variation")
-    material = forms.ChoiceField(choices=MATERIAL_CHOICES, required=False, help_text="Select material type")
-    size = forms.ChoiceField(choices=SIZE_CHOICES, required=False, help_text="Select size option")
+    
+    # Use CharField with datalist for autocomplete (allows custom values!)
+    color = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'list': 'color-suggestions',
+            'placeholder': 'Type or select a color...',
+            'class': 'vTextField',
+            'autocomplete': 'off'
+        }),
+        help_text="Select from suggestions or type your own color"
+    )
+    
+    material = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'list': 'material-suggestions',
+            'placeholder': 'Type or select a material...',
+            'class': 'vTextField',
+            'autocomplete': 'off'
+        }),
+        help_text="Select from suggestions or type your own material"
+    )
+    
+    size = forms.CharField(
+        required=False,
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'list': 'size-suggestions',
+            'placeholder': 'Type or select a size...',
+            'class': 'vTextField',
+            'autocomplete': 'off'
+        }),
+        help_text="Select from suggestions or type your own size"
+    )
 
     class Meta:
         model = ProductVariation
@@ -108,13 +153,13 @@ class ProductVariationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Pre-fill form fields from existing JSON attributes
-        if self.instance and self.instance.attributes:
+        if self.instance and self.instance.pk and self.instance.attributes:
             try:
-                attributes = json.loads(self.instance.attributes)
+                attributes = self.instance.get_attributes_dict()
                 self.fields['color'].initial = attributes.get('color', '')
                 self.fields['material'].initial = attributes.get('material', '')
                 self.fields['size'].initial = attributes.get('size', '')
-            except json.JSONDecodeError:
+            except Exception:
                 pass
 
     def save(self, commit=True):
@@ -122,18 +167,24 @@ class ProductVariationForm(forms.ModelForm):
 
         # Build attributes JSON from form fields
         attributes = {}
-        if self.cleaned_data['color']:
-            attributes['color'] = self.cleaned_data['color']
-        if self.cleaned_data['material']:
-            attributes['material'] = self.cleaned_data['material']
-        if self.cleaned_data['size']:
-            attributes['size'] = self.cleaned_data['size']
+        if self.cleaned_data.get('color'):
+            attributes['color'] = self.cleaned_data['color'].strip()
+        if self.cleaned_data.get('material'):
+            attributes['material'] = self.cleaned_data['material'].strip()
+        if self.cleaned_data.get('size'):
+            attributes['size'] = self.cleaned_data['size'].strip()
 
-        variation.attributes = json.dumps(attributes)
+        variation.attributes = attributes  # No need to JSON encode, JSONField handles it
 
         if commit:
             variation.save()
         return variation
+    
+    class Media:
+        css = {
+            'all': ('admin/css/variation-autocomplete.css',)
+        }
+        js = ('admin/js/variation-autocomplete.js',)
 
 
 class ProductVariationInline(admin.TabularInline):
