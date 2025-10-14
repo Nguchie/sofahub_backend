@@ -88,6 +88,17 @@ class BlogPost(models.Model):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
         
+        # Optimize featured image if present
+        if self.featured_image:
+            from core.utils import optimize_image, validate_blog_image
+            try:
+                # Validate first
+                validate_blog_image(self.featured_image)
+                # Optimize blog images (max 1920px, quality 85)
+                self.featured_image = optimize_image(self.featured_image, max_width=1920, max_height=1920, quality=85)
+            except Exception as e:
+                print(f"⚠️ Blog image optimization failed: {e}")
+        
         super().save(*args, **kwargs)
     
     @property

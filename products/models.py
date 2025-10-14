@@ -24,6 +24,17 @@ class RoomCategory(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        
+        # Optimize category image if present
+        if self.image:
+            from core.utils import optimize_image, validate_product_image
+            try:
+                validate_product_image(self.image)
+                # Optimize category images (max 1200px, quality 85)
+                self.image = optimize_image(self.image, max_width=1200, max_height=1200, quality=85)
+            except Exception as e:
+                print(f"⚠️ Category image optimization failed: {e}")
+        
         super().save(*args, **kwargs)
 
 
@@ -199,8 +210,19 @@ class ProductImage(models.Model):
                 raise ValidationError({'image': str(e)})
     
     def save(self, *args, **kwargs):
-        """Override save to call full_clean() for validation"""
+        """Override save to optimize image and call validation"""
+        # Validate first
         self.full_clean()
+        
+        # Optimize image if it's a new upload
+        if self.image:
+            from core.utils import optimize_image
+            try:
+                # Optimize product images (max 2000px, quality 85)
+                self.image = optimize_image(self.image, max_width=2000, max_height=2000, quality=85)
+            except Exception as e:
+                print(f"⚠️ Failed to optimize image: {e}")
+        
         super().save(*args, **kwargs)
 
 

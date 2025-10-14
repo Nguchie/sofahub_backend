@@ -1,5 +1,9 @@
 import uuid
 from django.utils import timezone
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
+import sys
 
 def generate_session_id():
     """Generate a unique session ID for anonymous users"""
@@ -37,14 +41,110 @@ def get_image_url(image_id, request=None):
     else:
         return f"https://sofahubbackend-production.up.railway.app/api/images/{image_id}/"
 
+def optimize_image(image, max_width=2000, max_height=2000, quality=85):
+    """
+    Optimize an uploaded image to reduce file size and dimensions.
+    
+    Args:
+        image: Django UploadedFile object
+        max_width: Maximum width in pixels (default 2000)
+        max_height: Maximum height in pixels (default 2000)
+        quality: JPEG quality 1-100 (default 85, good balance)
+    
+    Returns:
+        Optimized InMemoryUploadedFile object
+    """
+    try:
+        # Open the image
+        img = Image.open(image)
+        
+        # Convert RGBA to RGB (for PNG with transparency)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Get original dimensions
+        original_width, original_height = img.size
+        
+        # Calculate new dimensions maintaining aspect ratio
+        if original_width > max_width or original_height > max_height:
+            ratio = min(max_width / original_width, max_height / original_height)
+            new_width = int(original_width * ratio)
+            new_height = int(original_height * ratio)
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            print(f"✅ Resized image from {original_width}x{original_height} to {new_width}x{new_height}")
+        
+        # Save optimized image to BytesIO
+        output = BytesIO()
+        img.save(output, format='JPEG', quality=quality, optimize=True)
+        output.seek(0)
+        
+        # Get file size info
+        original_size = image.size if hasattr(image, 'size') else 0
+        new_size = output.getbuffer().nbytes
+        if original_size > 0:
+            savings = ((original_size - new_size) / original_size) * 100
+            print(f"✅ Compressed image: {original_size/1024:.1f}KB → {new_size/1024:.1f}KB (saved {savings:.1f}%)")
+        
+        # Create new InMemoryUploadedFile
+        optimized_image = InMemoryUploadedFile(
+            output,
+            'ImageField',
+            f"{image.name.split('.')[0]}.jpg",
+            'image/jpeg',
+            sys.getsizeof(output),
+            None
+        )
+        
+        return optimized_image
+        
+    except Exception as e:
+        print(f"⚠️ Image optimization failed: {e}. Using original image.")
+        return image
+
 def validate_product_image(image):
     """
-    Placeholder validator for product images.
-    Currently allows all images. Add validation logic here if needed.
+    Validate and optimize product images.
+    
+    Args:
+        image: Django UploadedFile object
+        
+    Raises:
+        ValidationError if image is invalid
+    """
+    from django.core.exceptions import ValidationError
+    
+    # Check file size (max 10MB before optimization)
+    max_size = 10 * 1024 * 1024  # 10MB
+    if hasattr(image, 'size') and image.size > max_size:
+        raise ValidationError(f'Image file size cannot exceed 10MB. Current size: {image.size / (1024*1024):.1f}MB')
+    
+    # Check file type
+    valid_extensions = ['jpg', 'jpeg', 'png', 'webp']
+    if hasattr(image, 'name'):
+        ext = image.name.split('.')[-1].lower()
+        if ext not in valid_extensions:
+            raise ValidationError(f'Invalid file type. Allowed types: {", ".join(valid_extensions)}')
+    
+    # Try to open and validate as image
+    try:
+        img = Image.open(image)
+        img.verify()
+        image.seek(0)  # Reset file pointer after verify
+    except Exception as e:
+        raise ValidationError(f'Invalid image file: {str(e)}')
+
+def validate_blog_image(image):
+    """
+    Validate and optimize blog featured images.
+    Same as product images but could have different rules in future.
     
     Args:
         image: Django UploadedFile object
     """
-    # Placeholder - no validation currently
-    # You can add validation here if needed in the future
-    pass
+    return validate_product_image(image)
