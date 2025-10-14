@@ -1,151 +1,21 @@
 /**
- * Product Variation Autocomplete Styles
- * Makes the autocomplete inputs more visible and user-friendly
+ * Product Variation Styles - Minimal styling to ensure visibility
+ * Uses Django admin default styling with minimal overrides
  */
 
-/* Style for variation input fields */
+/* Ensure text is visible in input fields */
 input[list="color-suggestions"],
 input[list="material-suggestions"],
 input[list="size-suggestions"] {
-    min-width: 150px;
-    max-width: 200px;
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 14px;
-    background-color: #f8f8f8 !important;
     color: #333 !important;
-    transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-/* Focus state */
-input[list="color-suggestions"]:focus,
-input[list="material-suggestions"]:focus,
-input[list="size-suggestions"]:focus {
-    border-color: #417690;
-    box-shadow: 0 0 0 3px rgba(65, 118, 144, 0.1);
-    outline: none;
     background-color: #fff !important;
-    color: #333 !important;
 }
 
-/* Placeholder styling */
+/* Make sure placeholders are visible */
 input[list="color-suggestions"]::placeholder,
 input[list="material-suggestions"]::placeholder,
 input[list="size-suggestions"]::placeholder {
-    color: #999;
-    font-style: italic;
-}
-
-/* Help text styling */
-.help {
-    display: block;
-    font-size: 12px;
-    color: #666;
-    margin-top: 4px;
-    font-style: italic;
-}
-
-/* Make inline variation forms more spacious */
-.inline-related .form-row {
-    padding: 10px 0;
-}
-
-/* Highlight fields with values */
-input[list="color-suggestions"]:not(:placeholder-shown),
-input[list="material-suggestions"]:not(:placeholder-shown),
-input[list="size-suggestions"]:not(:placeholder-shown) {
-    background-color: #f0f8ff !important;
-    border-color: #79aec8;
-    color: #333 !important;
-}
-
-/* Table width constraints for variation inline */
-.inline-related table {
-    max-width: 100%;
-    table-layout: fixed;
-}
-
-/* Column width constraints */
-.inline-related th:nth-child(1), /* SKU */
-.inline-related td:nth-child(1) {
-    width: 20%;
-    min-width: 120px;
-}
-
-.inline-related th:nth-child(2), /* Color */
-.inline-related td:nth-child(2),
-.inline-related th:nth-child(3), /* Material */
-.inline-related td:nth-child(3),
-.inline-related th:nth-child(4), /* Size */
-.inline-related td:nth-child(4) {
-    width: 15%;
-    min-width: 100px;
-}
-
-.inline-related th:nth-child(5), /* Stock */
-.inline-related td:nth-child(5),
-.inline-related th:nth-child(6), /* Price Modifier */
-.inline-related td:nth-child(6),
-.inline-related th:nth-child(7), /* Price Display */
-.inline-related td:nth-child(7),
-.inline-related th:nth-child(8), /* Is Active */
-.inline-related td:nth-child(8) {
-    width: 10%;
-    min-width: 80px;
-}
-
-/* Ensure text is visible in all input fields */
-.inline-related input[type="text"],
-.inline-related input[type="number"] {
-    background-color: #f8f8f8 !important;
-    color: #333 !important;
-    border: 1px solid #ccc !important;
-}
-
-/* Responsive improvements for smaller screens */
-@media (max-width: 1200px) {
-    .inline-related table {
-        font-size: 12px;
-    }
-    
-    .inline-related th:nth-child(1), /* SKU */
-    .inline-related td:nth-child(1) {
-        width: 25%;
-        min-width: 100px;
-    }
-    
-    .inline-related th:nth-child(2), /* Color */
-    .inline-related td:nth-child(2),
-    .inline-related th:nth-child(3), /* Material */
-    .inline-related td:nth-child(3),
-    .inline-related th:nth-child(4), /* Size */
-    .inline-related td:nth-child(4) {
-        width: 12%;
-        min-width: 80px;
-    }
-    
-    .inline-related th:nth-child(5), /* Stock */
-    .inline-related td:nth-child(5),
-    .inline-related th:nth-child(6), /* Price Modifier */
-    .inline-related td:nth-child(6),
-    .inline-related th:nth-child(7), /* Price Display */
-    .inline-related td:nth-child(7),
-    .inline-related th:nth-child(8), /* Is Active */
-    .inline-related td:nth-child(8) {
-        width: 8%;
-        min-width: 60px;
-    }
-}
-
-/* Ensure the variation section header is properly styled */
-.inline-related h2 {
-    background-color: #417690;
-    color: white;
-    padding: 10px 15px;
-    margin: 0;
-    font-size: 14px;
-    font-weight: bold;
-    text-transform: uppercase;
+    color: #999 !important;
+    opacity: 1;
 }
 

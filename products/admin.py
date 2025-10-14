@@ -57,92 +57,34 @@ class ProductImageInline(admin.TabularInline):
 
 
 class ProductVariationForm(forms.ModelForm):
-    """User-friendly form for product variations with autocomplete suggestions"""
+    """Simple form for product variations using default Django styling"""
     
-    # Common furniture colors (as suggestions, not restrictions)
-    COLOR_SUGGESTIONS = [
-        'Black', 'White', 'Gray', 'Charcoal', 'Silver',
-        'Brown', 'Tan', 'Beige', 'Cream', 'Ivory',
-        'Red', 'Burgundy', 'Maroon',
-        'Blue', 'Navy', 'Teal', 'Turquoise',
-        'Green', 'Olive', 'Sage',
-        'Yellow', 'Gold', 'Mustard',
-        'Orange', 'Rust', 'Terracotta',
-        'Purple', 'Plum', 'Lavender',
-        'Pink', 'Rose', 'Blush',
-        'Walnut', 'Oak', 'Cherry', 'Mahogany', 'Espresso',
-        'Natural Wood', 'Light Wood', 'Dark Wood',
-        'Multi-Color', 'Patterned', 'Two-Tone'
-    ]
-    
-    # Common furniture materials
-    MATERIAL_SUGGESTIONS = [
-        'Leather', 'Genuine Leather', 'Bonded Leather', 'Faux Leather',
-        'Fabric', 'Linen', 'Cotton', 'Velvet', 'Microfiber', 'Suede',
-        'Wood', 'Solid Wood', 'Oak', 'Pine', 'Walnut', 'Teak', 'Mahogany',
-        'Engineered Wood', 'MDF', 'Plywood', 'Particle Board',
-        'Metal', 'Steel', 'Aluminum', 'Iron', 'Brass', 'Chrome',
-        'Glass', 'Tempered Glass', 'Frosted Glass',
-        'Marble', 'Granite', 'Quartz',
-        'Rattan', 'Wicker', 'Bamboo', 'Cane',
-        'Plastic', 'Acrylic', 'Resin',
-        'Upholstered', 'Foam', 'Memory Foam',
-        'Mixed Materials', 'Wood & Metal', 'Fabric & Wood'
-    ]
-    
-    # Common furniture sizes
-    SIZE_SUGGESTIONS = [
-        # Bed sizes
-        'King Size', 'Queen Size', 'Full/Double', 'Twin/Single', 'California King',
-        # General sizes
-        'Small', 'Medium', 'Large', 'Extra Large',
-        # Seating
-        '2-Seater', '3-Seater', '4-Seater', '5-Seater', 'L-Shape', 'U-Shape',
-        # Tables
-        '4-Person', '6-Person', '8-Person', '10-Person', '12-Person',
-        # Dimensions (examples)
-        '120cm', '150cm', '180cm', '200cm', '240cm',
-        # Storage
-        '2-Door', '3-Door', '4-Door', '5-Drawer', '6-Drawer',
-        # Other
-        'Compact', 'Standard', 'Oversized', 'Custom Size'
-    ]
-    
-    # Use CharField with datalist for autocomplete (allows custom values!)
+    # Simple text fields with basic styling
     color = forms.CharField(
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
-            'list': 'color-suggestions',
-            'placeholder': 'Type or select a color...',
-            'class': 'vTextField',
-            'autocomplete': 'off'
-        }),
-        help_text="Select from suggestions or type your own color"
+            'placeholder': 'Color (e.g., Gray, Black, Brown)',
+            'class': 'vTextField'
+        })
     )
     
     material = forms.CharField(
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
-            'list': 'material-suggestions',
-            'placeholder': 'Type or select a material...',
-            'class': 'vTextField',
-            'autocomplete': 'off'
-        }),
-        help_text="Select from suggestions or type your own material"
+            'placeholder': 'Material (e.g., Fabric, Leather, Wood)',
+            'class': 'vTextField'
+        })
     )
     
     size = forms.CharField(
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
-            'list': 'size-suggestions',
-            'placeholder': 'Type or select a size...',
-            'class': 'vTextField',
-            'autocomplete': 'off'
-        }),
-        help_text="Select from suggestions or type your own size"
+            'placeholder': 'Size (e.g., Medium, Large, King)',
+            'class': 'vTextField'
+        })
     )
 
     class Meta:
@@ -179,42 +121,19 @@ class ProductVariationForm(forms.ModelForm):
         if commit:
             variation.save()
         return variation
-    
-    class Media:
-        css = {
-            'all': ('admin/css/variation-autocomplete.css',)
-        }
-        js = ('admin/js/variation-autocomplete.js',)
 
 
 class ProductVariationInline(admin.TabularInline):
     model = ProductVariation
     form = ProductVariationForm
     extra = 1
-    readonly_fields = ['price_display', 'attributes_display']
-    fields = ['sku', 'color', 'material', 'size', 'stock_quantity', 'price_modifier', 'price_display', 'is_active']
-    
-    class Media:
-        css = {
-            'all': ('admin/css/variation-autocomplete.css',)
-        }
-        js = ('admin/js/variation-autocomplete.js',)
+    fields = ['sku', 'color', 'material', 'size', 'stock_quantity', 'price_modifier', 'is_active']
+    readonly_fields = ['price_display']
 
     def price_display(self, obj):
         return f"KSh {obj.price}"
 
     price_display.short_description = 'Price'
-
-    def attributes_display(self, obj):
-        if obj.attributes:
-            try:
-                attrs = json.loads(obj.attributes)
-                return ", ".join([f"{k}: {v}" for k, v in attrs.items() if v])
-            except:
-                return obj.attributes
-        return "No attributes"
-
-    attributes_display.short_description = 'Attributes'
 
 
 @admin.register(RoomCategory)
