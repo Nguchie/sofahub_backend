@@ -27,7 +27,16 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         # Check if room_category filter is in request context
         request = self.context.get('request')
         if request:
-            room_category = request.query_params.get('room_category')
+            # Handle both DRF request objects and Django WSGIRequest objects
+            if hasattr(request, 'query_params'):
+                # DRF request object
+                room_category = request.query_params.get('room_category')
+            elif hasattr(request, 'GET'):
+                # Django WSGIRequest object
+                room_category = request.GET.get('room_category')
+            else:
+                room_category = None
+                
             if room_category:
                 queryset = queryset.filter(room_categories__slug=room_category)
         
