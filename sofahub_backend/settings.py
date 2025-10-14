@@ -133,7 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Nairobi'
 
 USE_I18N = True
 
@@ -192,6 +192,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
+
+# Image optimization settings
+# ENABLE_IMAGE_OPTIMIZATION: Set to 'true' to enable lightweight image processing
+# Note: Even with optimization enabled, processing is now much faster and shouldn't timeout
+# Default: 'false' (disabled) to prevent any potential timeout issues
+ENABLE_IMAGE_OPTIMIZATION = os.getenv('ENABLE_IMAGE_OPTIMIZATION', 'False').lower() == 'true'
 
 
 

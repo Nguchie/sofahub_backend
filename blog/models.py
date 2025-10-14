@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.html import strip_tags
+from django.conf import settings
 import re
 
 
@@ -88,8 +89,8 @@ class BlogPost(models.Model):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
         
-        # Optimize featured image if present
-        if self.featured_image:
+        # Optimize featured image if enabled and present
+        if self.featured_image and getattr(settings, 'ENABLE_IMAGE_OPTIMIZATION', False):
             from core.utils import optimize_image, validate_blog_image
             try:
                 # Validate first

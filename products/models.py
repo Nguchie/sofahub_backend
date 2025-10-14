@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from core.utils import is_sale_active
 from django.utils import timezone
 from decimal import Decimal
+from django.conf import settings
 import json
 
 class RoomCategory(models.Model):
@@ -25,8 +26,8 @@ class RoomCategory(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         
-        # Optimize category image if present
-        if self.image:
+        # Optimize category image if enabled and present
+        if self.image and getattr(settings, 'ENABLE_IMAGE_OPTIMIZATION', False):
             from core.utils import optimize_image, validate_product_image
             try:
                 validate_product_image(self.image)
@@ -214,8 +215,8 @@ class ProductImage(models.Model):
         # Validate first
         self.full_clean()
         
-        # Optimize image if it's a new upload
-        if self.image:
+        # Optimize image if enabled and it's a new upload
+        if self.image and getattr(settings, 'ENABLE_IMAGE_OPTIMIZATION', False):
             from core.utils import optimize_image
             try:
                 # Optimize product images (max 2000px, quality 85)

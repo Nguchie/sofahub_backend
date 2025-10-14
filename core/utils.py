@@ -43,7 +43,8 @@ def get_image_url(image_id, request=None):
 
 def optimize_image(image, max_width=2000, max_height=2000, quality=85):
     """
-    Optimize an uploaded image to reduce file size and dimensions.
+    Lightweight image optimization to prevent timeouts.
+    Only does basic resizing without heavy processing.
     
     Args:
         image: Django UploadedFile object
@@ -58,38 +59,28 @@ def optimize_image(image, max_width=2000, max_height=2000, quality=85):
         # Open the image
         img = Image.open(image)
         
-        # Convert RGBA to RGB (for PNG with transparency)
+        # Quick mode conversion (no heavy processing)
         if img.mode in ('RGBA', 'LA', 'P'):
-            background = Image.new('RGB', img.size, (255, 255, 255))
-            if img.mode == 'P':
-                img = img.convert('RGBA')
-            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-            img = background
+            img = img.convert('RGB')
         elif img.mode != 'RGB':
             img = img.convert('RGB')
         
         # Get original dimensions
         original_width, original_height = img.size
         
-        # Calculate new dimensions maintaining aspect ratio
-        if original_width > max_width or original_height > max_height:
+        # Only resize if significantly larger (prevent unnecessary processing)
+        if original_width > max_width * 1.2 or original_height > max_height * 1.2:
             ratio = min(max_width / original_width, max_height / original_height)
             new_width = int(original_width * ratio)
             new_height = int(original_height * ratio)
-            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-            print(f"✅ Resized image from {original_width}x{original_height} to {new_width}x{new_height}")
+            # Use faster resampling method
+            img = img.resize((new_width, new_height), Image.Resampling.NEAREST)
+            print(f"✅ Quick resize: {original_width}x{original_height} → {new_width}x{new_height}")
         
-        # Save optimized image to BytesIO
+        # Save with basic optimization
         output = BytesIO()
-        img.save(output, format='JPEG', quality=quality, optimize=True)
+        img.save(output, format='JPEG', quality=quality, optimize=False)  # Disable heavy optimization
         output.seek(0)
-        
-        # Get file size info
-        original_size = image.size if hasattr(image, 'size') else 0
-        new_size = output.getbuffer().nbytes
-        if original_size > 0:
-            savings = ((original_size - new_size) / original_size) * 100
-            print(f"✅ Compressed image: {original_size/1024:.1f}KB → {new_size/1024:.1f}KB (saved {savings:.1f}%)")
         
         # Create new InMemoryUploadedFile
         optimized_image = InMemoryUploadedFile(
