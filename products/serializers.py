@@ -21,7 +21,17 @@ class ProductTypeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'description', 'icon', 'is_active', 'order', 'product_count']
 
     def get_product_count(self, obj):
-        return obj.products.filter(is_active=True).count()
+        """Get product count, filtered by room category if provided in context"""
+        queryset = obj.products.filter(is_active=True)
+        
+        # Check if room_category filter is in request context
+        request = self.context.get('request')
+        if request:
+            room_category = request.query_params.get('room_category')
+            if room_category:
+                queryset = queryset.filter(room_categories__slug=room_category)
+        
+        return queryset.count()
 
 
 class TagSerializer(serializers.ModelSerializer):

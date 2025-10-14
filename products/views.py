@@ -42,13 +42,33 @@ class RoomCategoryList(generics.ListCreateAPIView):
 
 
 class ProductTypeList(generics.ListCreateAPIView):
-    queryset = ProductType.objects.all()
     serializer_class = ProductTypeSerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name']
     ordering_fields = ['name']
     ordering = ['name']
+
+    def get_queryset(self):
+        """Get product types, optionally filtered by room category"""
+        queryset = ProductType.objects.filter(is_active=True)
+        
+        # Filter by room category if provided
+        room_category = self.request.query_params.get('room_category', None)
+        if room_category:
+            # Get product types that have products in this room category
+            queryset = queryset.filter(
+                products__room_categories__slug=room_category,
+                products__is_active=True
+            ).distinct()
+        
+        return queryset
+    
+    def get_serializer_context(self):
+        """Ensure request context is passed to serializers"""
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 
 class ProductTypesByRoomView(generics.ListAPIView):
