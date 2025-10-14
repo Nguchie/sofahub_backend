@@ -193,6 +193,12 @@ class ProductVariationInline(admin.TabularInline):
     extra = 1
     readonly_fields = ['price_display', 'attributes_display']
     fields = ['sku', 'color', 'material', 'size', 'stock_quantity', 'price_modifier', 'price_display', 'is_active']
+    
+    class Media:
+        css = {
+            'all': ('admin/css/variation-autocomplete.css',)
+        }
+        js = ('admin/js/variation-autocomplete.js',)
 
     def price_display(self, obj):
         return f"KSh {obj.price}"

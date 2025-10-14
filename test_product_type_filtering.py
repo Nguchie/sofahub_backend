@@ -162,3 +162,4 @@ print("   - /api/products/product-types/?room_category=living-room → Living ro
 print("   - /api/products/product-types/?room_category=dining-room → Dining room types only")
 print("=" * 70)
 
+
