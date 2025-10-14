@@ -64,7 +64,7 @@ class ProductVariationForm(forms.ModelForm):
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
-            'placeholder': 'Color (e.g., Gray, Black, Brown)',
+            'placeholder': 'Color',
             'class': 'vTextField'
         })
     )
@@ -73,7 +73,7 @@ class ProductVariationForm(forms.ModelForm):
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
-            'placeholder': 'Material (e.g., Fabric, Leather, Wood)',
+            'placeholder': 'Material',
             'class': 'vTextField'
         })
     )
@@ -82,7 +82,7 @@ class ProductVariationForm(forms.ModelForm):
         required=False,
         max_length=100,
         widget=forms.TextInput(attrs={
-            'placeholder': 'Size (e.g., Medium, Large, King)',
+            'placeholder': 'Size',
             'class': 'vTextField'
         })
     )
