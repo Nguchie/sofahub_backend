@@ -39,10 +39,14 @@ class ProductImageInline(admin.TabularInline):
             if os.path.exists(full_path):
                 file_size = os.path.getsize(full_path)
                 size_kb = file_size / 1024
-                return format_html(
-                    '<span style="color: green;">✓ {:.1f} KB</span>',
-                    size_kb
-                )
+                # Ensure size_kb is a valid number
+                if isinstance(size_kb, (int, float)) and size_kb >= 0:
+                    return format_html(
+                        '<span style="color: green;">✓ {:.1f} KB</span>',
+                        size_kb
+                    )
+                else:
+                    return format_html('<span style="color: green;">✓ File exists</span>')
             else:
                 return format_html('<span style="color: red;">✗ File missing</span>')
                 

@@ -198,9 +198,23 @@ def validate_product_image(image):
         if ext not in valid_extensions:
             raise ValidationError(f'Invalid file type. Allowed types: {", ".join(valid_extensions)}')
     
-    # Check for suspicious file names
-    if hasattr(image, 'name') and any(char in image.name for char in ['..', '/', '\\', '<', '>', ':', '"', '|', '?', '*']):
-        raise ValidationError('Invalid file name. Contains unsafe characters.')
+    # Check for suspicious file names (but allow system-generated paths)
+    if hasattr(image, 'name'):
+        filename = image.name
+        
+        # Allow system-generated UUID filenames and normal paths
+        import re
+        uuid_pattern = r'^[a-f0-9]{32}\.[a-zA-Z0-9]+$'  # UUID + extension
+        path_uuid_pattern = r'^[^/]+/[a-f0-9]{32}\.[a-zA-Z0-9]+$'  # path/UUID + extension
+        
+        # Skip validation for system-generated UUID filenames
+        if re.match(uuid_pattern, filename.split('/')[-1]) or re.match(path_uuid_pattern, filename):
+            pass  # Allow system-generated filenames
+        else:
+            # Only check for truly dangerous characters in user-uploaded files
+            dangerous_chars = ['..', '<', '>', ':', '"', '|', '?', '*']
+            if any(char in filename for char in dangerous_chars):
+                raise ValidationError('Invalid file name. Contains unsafe characters.')
     
     # Only do heavy validation in development or when explicitly enabled
     if settings.DEBUG or getattr(settings, 'ENABLE_HEAVY_VALIDATION', False):
