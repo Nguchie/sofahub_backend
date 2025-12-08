@@ -7,3 +7,6 @@ class CoreConfig(AppConfig):
     
     def ready(self):
         import core.signals
+        # Import models to ensure signals are connected
+        from products.models import Product, RoomCategory
+        from blog.models import BlogPost

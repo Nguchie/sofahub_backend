@@ -163,3 +163,4 @@ print("   - /api/products/product-types/?room_category=dining-room → Dining ro
 print("=" * 70)
 
 
+

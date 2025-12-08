@@ -1,7 +1,8 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
+from .models import Redirect
 
 
 @receiver(post_save, sender=User)
@@ -67,3 +68,103 @@ def set_staff_permissions(user):
         print(f"Warning: ContentType not found: {e}")
     except Exception as e:
         print(f"Warning: Error setting permissions: {e}")
+
+
+# Redirect signal handlers for slug changes
+def create_redirect_if_slug_changed(instance, old_slug, new_slug, redirect_type):
+    """Helper function to create a redirect when a slug changes"""
+    if old_slug and new_slug and old_slug != new_slug:
+        # Determine the path prefix based on redirect type
+        path_prefix_map = {
+            'product': '/product/',
+            'category': '/category/',
+            'blog': '/blog/',
+        }
+        path_prefix = path_prefix_map.get(redirect_type, '/')
+        
+        old_path = f"{path_prefix}{old_slug}"
+        new_path = f"{path_prefix}{new_slug}"
+        
+        # Create redirect if it doesn't already exist
+        redirect, created = Redirect.objects.get_or_create(
+            old_path=old_path,
+            defaults={
+                'new_path': new_path,
+                'redirect_type': redirect_type,
+                'is_active': True
+            }
+        )
+        
+        if created:
+            print(f"✅ Created redirect: {old_path} → {new_path}")
+        elif redirect.new_path != new_path:
+            # Update redirect if path changed again
+            redirect.new_path = new_path
+            redirect.save()
+            print(f"✅ Updated redirect: {old_path} → {new_path}")
+
+
+# Store old slugs before save
+_product_old_slugs = {}
+_category_old_slugs = {}
+_blog_old_slugs = {}
+
+
+@receiver(pre_save, sender='products.Product')
+def store_product_old_slug(sender, instance, **kwargs):
+    """Store old slug before product save"""
+    if instance.pk:
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            _product_old_slugs[instance.pk] = old_instance.slug
+        except sender.DoesNotExist:
+            pass
+
+
+@receiver(post_save, sender='products.Product')
+def handle_product_slug_change(sender, instance, created, **kwargs):
+    """Create redirect when product slug changes"""
+    if not created and instance.pk in _product_old_slugs:
+        old_slug = _product_old_slugs[instance.pk]
+        create_redirect_if_slug_changed(instance, old_slug, instance.slug, 'product')
+        del _product_old_slugs[instance.pk]
+
+
+@receiver(pre_save, sender='products.RoomCategory')
+def store_category_old_slug(sender, instance, **kwargs):
+    """Store old slug before category save"""
+    if instance.pk:
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            _category_old_slugs[instance.pk] = old_instance.slug
+        except sender.DoesNotExist:
+            pass
+
+
+@receiver(post_save, sender='products.RoomCategory')
+def handle_category_slug_change(sender, instance, created, **kwargs):
+    """Create redirect when category slug changes"""
+    if not created and instance.pk in _category_old_slugs:
+        old_slug = _category_old_slugs[instance.pk]
+        create_redirect_if_slug_changed(instance, old_slug, instance.slug, 'category')
+        del _category_old_slugs[instance.pk]
+
+
+@receiver(pre_save, sender='blog.BlogPost')
+def store_blog_old_slug(sender, instance, **kwargs):
+    """Store old slug before blog post save"""
+    if instance.pk:
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            _blog_old_slugs[instance.pk] = old_instance.slug
+        except sender.DoesNotExist:
+            pass
+
+
+@receiver(post_save, sender='blog.BlogPost')
+def handle_blog_slug_change(sender, instance, created, **kwargs):
+    """Create redirect when blog post slug changes"""
+    if not created and instance.pk in _blog_old_slugs:
+        old_slug = _blog_old_slugs[instance.pk]
+        create_redirect_if_slug_changed(instance, old_slug, instance.slug, 'blog')
+        del _blog_old_slugs[instance.pk]

@@ -74,3 +74,23 @@ class UserAdmin(BaseUserAdmin):
 # Unregister the default User admin and register our custom one
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+
+# Register Redirect model
+from .models import Redirect
+
+@admin.register(Redirect)
+class RedirectAdmin(admin.ModelAdmin):
+    list_display = ['old_path', 'new_path', 'redirect_type', 'is_active', 'created_at']
+    list_filter = ['redirect_type', 'is_active', 'created_at']
+    search_fields = ['old_path', 'new_path']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Redirect Information', {
+            'fields': ('old_path', 'new_path', 'redirect_type', 'is_active')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

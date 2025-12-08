@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/orders/', include('orders.urls')),
     path('api/contact/', include('contact.urls')),
     path('api/blog/', include('blog.urls')),
+    path('api/', include('core.urls')),
 ]
 
 # Serve media files using custom view
