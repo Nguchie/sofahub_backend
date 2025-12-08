@@ -220,11 +220,11 @@ def validate_product_image(image):
     if settings.DEBUG or getattr(settings, 'ENABLE_HEAVY_VALIDATION', False):
         try:
             # Quick image header check (doesn't load full image)
-        img = Image.open(image)
-        img.verify()
+            img = Image.open(image)
+            img.verify()
             image.seek(0)  # Reset file pointer
-    except Exception as e:
-        raise ValidationError(f'Invalid image file: {str(e)}')
+        except Exception as e:
+            raise ValidationError(f'Invalid image file: {str(e)}')
     
     return True
 
