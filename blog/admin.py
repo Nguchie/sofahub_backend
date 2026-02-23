@@ -13,8 +13,19 @@ class BlogTagAdmin(admin.ModelAdmin):
     post_count.short_description = 'Posts'
 
     def has_module_permission(self, request):
-        """Only superusers can see blog tags"""
-        return request.user.is_superuser
+        return request.user.is_staff
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_add_permission(self, request):
+        return request.user.is_staff
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff
 
 
 @admin.register(BlogPost)
@@ -57,5 +68,16 @@ class BlogPostAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def has_module_permission(self, request):
-        """Only superusers can see blog posts"""
-        return request.user.is_superuser
+        return request.user.is_staff
+
+    def has_view_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_add_permission(self, request):
+        return request.user.is_staff
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_staff
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_staff
