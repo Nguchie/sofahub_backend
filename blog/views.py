@@ -11,12 +11,14 @@ from core.permissions import IsAdminOrReadOnly
 class BlogPostFilterSet(FilterSet):
     """Custom filter set for blog posts"""
     tags = CharFilter(method='filter_tags_by_slug')
+    product = CharFilter(method='filter_by_product')
+    category = CharFilter(method='filter_by_category')
     featured = CharFilter(field_name='is_featured', lookup_expr='exact')
     status = CharFilter(field_name='status', lookup_expr='exact')
     
     class Meta:
         model = BlogPost
-        fields = ['tags', 'featured', 'status']
+        fields = ['tags', 'product', 'category', 'featured', 'status']
     
     def filter_tags_by_slug(self, queryset, name, value):
         """Filter posts by tag slugs"""
@@ -26,6 +28,16 @@ class BlogPostFilterSet(FilterSet):
                 tags = BlogTag.objects.filter(slug__in=tag_slugs)
                 if tags.exists():
                     return queryset.filter(tags__in=tags).distinct()
+        return queryset
+
+    def filter_by_product(self, queryset, name, value):
+        if value:
+            return queryset.filter(related_products__slug=value).distinct()
+        return queryset
+
+    def filter_by_category(self, queryset, name, value):
+        if value:
+            return queryset.filter(related_categories__slug=value).distinct()
         return queryset
 
 
@@ -40,7 +52,11 @@ class BlogPostList(generics.ListAPIView):
     ordering = ['-published_at']
     
     def get_queryset(self):
-        queryset = BlogPost.objects.select_related('author').prefetch_related('tags')
+        queryset = BlogPost.objects.select_related('author').prefetch_related(
+            'tags',
+            'related_products',
+            'related_categories',
+        )
         
         # Only show published posts to non-admin users
         if not self.request.user.is_staff:
@@ -64,7 +80,11 @@ class BlogPostDetail(generics.RetrieveAPIView):
     lookup_field = 'slug'
     
     def get_queryset(self):
-        queryset = BlogPost.objects.select_related('author').prefetch_related('tags')
+        queryset = BlogPost.objects.select_related('author').prefetch_related(
+            'tags',
+            'related_products__images',
+            'related_categories',
+        )
         
         # Only show published posts to non-admin users
         if not self.request.user.is_staff:

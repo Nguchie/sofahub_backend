@@ -72,6 +72,18 @@ class BlogPost(models.Model):
         blank=True, 
         related_name='posts'
     )
+    related_products = models.ManyToManyField(
+        'products.Product',
+        blank=True,
+        related_name='blog_posts',
+        help_text='Products referenced by this post for SEO interlinking.'
+    )
+    related_categories = models.ManyToManyField(
+        'products.RoomCategory',
+        blank=True,
+        related_name='blog_posts',
+        help_text='Furniture categories this post supports.'
+    )
     
     class Meta:
         verbose_name = 'Blog Post'

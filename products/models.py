@@ -308,3 +308,17 @@ class ProductVariation(models.Model):
         elif key in attrs:
             del attrs[key]
         self.attributes = attrs
+
+
+class ProductFAQ(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='faqs')
+    question = models.CharField(max_length=255)
+    answer = models.TextField()
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"FAQ: {self.question[:50]}"

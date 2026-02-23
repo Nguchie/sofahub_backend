@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import RoomCategory, ProductType, Tag, Product, ProductImage, ProductVariation
+from .models import RoomCategory, ProductType, Tag, Product, ProductImage, ProductVariation, ProductFAQ
 
 
 class RoomCategorySerializer(serializers.ModelSerializer):
@@ -84,6 +84,12 @@ class ProductVariationSerializer(serializers.ModelSerializer):
             return {}
 
 
+class ProductFAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductFAQ
+        fields = ['id', 'question', 'answer', 'order']
+
+
 class ProductSerializer(serializers.ModelSerializer):
     room_categories = RoomCategorySerializer(many=True, read_only=True)
     product_types = ProductTypeSerializer(many=True, read_only=True)
@@ -93,6 +99,7 @@ class ProductSerializer(serializers.ModelSerializer):
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     is_on_sale = serializers.BooleanField(read_only=True)
     discount_percentage = serializers.SerializerMethodField()
+    faqs = serializers.SerializerMethodField()
 
     def get_images(self, obj):
         """Return all images ordered by order field, then by id"""
@@ -118,12 +125,17 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'description', 'base_price', 'sale_price',
             'sale_start', 'sale_end', 'current_price', 'is_on_sale', 'discount_percentage',
-            'room_categories', 'product_types', 'tags', 'images', 'variations',
+            'room_categories', 'product_types', 'tags', 'images', 'variations', 'faqs',
             'is_active', 'created_at', 'updated_at'
         ]
 
     def get_discount_percentage(self, obj):
         return obj.discount_percentage
+
+    def get_faqs(self, obj):
+        active_faqs = obj.faqs.filter(is_active=True).order_by('order', 'id')
+        serializer = ProductFAQSerializer(active_faqs, many=True)
+        return serializer.data
 
 
 class ProductListSerializer(serializers.ModelSerializer):

@@ -29,7 +29,7 @@ class BlogPostAdmin(admin.ModelAdmin):
     ]
     search_fields = ['title', 'excerpt', 'content']
     prepopulated_fields = {'slug': ('title',)}
-    filter_horizontal = ['tags']
+    filter_horizontal = ['tags', 'related_products', 'related_categories']
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = [
@@ -43,7 +43,7 @@ class BlogPostAdmin(admin.ModelAdmin):
             'fields': ['status', 'is_featured', 'published_at']
         }),
         ('Categorization', {
-            'fields': ['tags']
+            'fields': ['tags', 'related_products', 'related_categories']
         }),
         ('Timestamps', {
             'fields': ['created_at', 'updated_at'],

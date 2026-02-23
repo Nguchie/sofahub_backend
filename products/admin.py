@@ -2,7 +2,7 @@ from django import forms
 from django.utils.html import format_html
 from django.contrib import admin
 import json
-from .models import RoomCategory, ProductType, Tag, Product, ProductImage, ProductVariation
+from .models import RoomCategory, ProductType, Tag, Product, ProductImage, ProductVariation, ProductFAQ
 
 
 class ProductImageInline(admin.TabularInline):
@@ -140,6 +140,12 @@ class ProductVariationInline(admin.TabularInline):
     price_display.short_description = 'Price'
 
 
+class ProductFAQInline(admin.TabularInline):
+    model = ProductFAQ
+    extra = 1
+    fields = ['question', 'answer', 'order', 'is_active']
+
+
 @admin.register(RoomCategory)
 class RoomCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'order', 'is_active', 'product_count']
@@ -273,7 +279,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['room_categories', 'product_types', 'tags', 'is_active', 'created_at']
     search_fields = ['name', 'description']
     prepopulated_fields = {'slug': ('name',)}
-    inlines = [ProductImageInline, ProductVariationInline]
+    inlines = [ProductImageInline, ProductVariationInline, ProductFAQInline]
     filter_horizontal = ['room_categories', 'product_types', 'tags']
     readonly_fields = ['current_price', 'is_on_sale', 'created_at', 'updated_at']
     fieldsets = [

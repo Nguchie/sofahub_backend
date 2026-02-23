@@ -1,11 +1,15 @@
 from rest_framework import generics, filters, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import FilterSet, CharFilter
 from django.db.models import Q
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.conf import settings
+from decimal import Decimal
+from xml.sax.saxutils import escape
 from .models import RoomCategory, ProductType, Tag, Product, ProductImage
 from .serializers import (
     RoomCategorySerializer, ProductTypeSerializer, TagSerializer,
@@ -167,7 +171,7 @@ class ProductList(generics.ListAPIView):
 
 
 class ProductDetail(generics.RetrieveAPIView):
-    queryset = Product.objects.filter(is_active=True)
+    queryset = Product.objects.filter(is_active=True).prefetch_related('faqs', 'images', 'variations', 'room_categories', 'product_types')
     serializer_class = ProductSerializer
     lookup_field = 'slug'
 
@@ -207,3 +211,123 @@ def product_images(request, slug):
         'images': image_data,
         'total_images': total_images
     })
+
+
+@api_view(['GET'])
+def merchant_feed(request):
+    """
+    Google Merchant Center feed in RSS 2.0 format.
+    Exposes active products and variants with stable ids and KES prices.
+    """
+    site_url = getattr(settings, 'SITE_URL', 'https://sofahub.co.ke').rstrip('/')
+    products = Product.objects.filter(is_active=True).prefetch_related('images', 'variations')
+    now = timezone.now()
+
+    def amount(value: Decimal) -> str:
+        return f"{Decimal(value):.2f} KES"
+
+    def to_iso(dt):
+        if not dt:
+            return None
+        return dt.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def first_image_url(product):
+        from core.utils import get_image_url
+        images = list(product.images.all())
+        selected = None
+        for image in images:
+            if image.is_primary:
+                selected = image
+                break
+        if not selected and images:
+            selected = images[0]
+        if not selected or not selected.image:
+            return None
+        return get_image_url(selected.id, request)
+
+    def stock_to_availability(in_stock: bool):
+        return 'in stock' if in_stock else 'out of stock'
+
+    items = []
+    for product in products:
+        product_link = f"{site_url}/product/{product.slug}"
+        image_link = first_image_url(product)
+        variations = [v for v in product.variations.all() if v.is_active]
+        on_sale = product.is_on_sale and product.sale_price is not None
+        sale_effective = None
+        if on_sale:
+            start = product.sale_start if product.sale_start and product.sale_start <= now else now
+            end = product.sale_end
+            if end:
+                sale_effective = f"{to_iso(start)}/{to_iso(end)}"
+
+        if variations:
+            for variation in variations:
+                base_variant_price = product.base_price + variation.price_modifier
+                current_variant_price = product.current_price + variation.price_modifier
+                title = f"{product.name} ({variation.sku})"
+                items.append({
+                    'id': variation.sku,
+                    'item_group_id': str(product.id),
+                    'title': title,
+                    'description': product.description,
+                    'link': product_link,
+                    'image_link': image_link,
+                    'availability': stock_to_availability(variation.stock_quantity > 0),
+                    'price': amount(base_variant_price if on_sale else current_variant_price),
+                    'sale_price': amount(current_variant_price) if on_sale else None,
+                    'sale_effective_date': sale_effective,
+                    'condition': 'new',
+                    'brand': 'SofaHub',
+                })
+        else:
+            items.append({
+                'id': f"product-{product.id}",
+                'item_group_id': str(product.id),
+                'title': product.name,
+                'description': product.description,
+                'link': product_link,
+                'image_link': image_link,
+                'availability': stock_to_availability(True),
+                'price': amount(product.base_price if on_sale else product.current_price),
+                'sale_price': amount(product.current_price) if on_sale else None,
+                'sale_effective_date': sale_effective,
+                'condition': 'new',
+                'brand': 'SofaHub',
+            })
+
+    xml_items = []
+    for item in items:
+        lines = [
+            "    <item>",
+            f"      <g:id>{escape(item['id'])}</g:id>",
+            f"      <g:item_group_id>{escape(item['item_group_id'])}</g:item_group_id>",
+            f"      <title>{escape(item['title'])}</title>",
+            f"      <description>{escape(item['description'] or '')}</description>",
+            f"      <link>{escape(item['link'])}</link>",
+            f"      <g:availability>{escape(item['availability'])}</g:availability>",
+            f"      <g:price>{escape(item['price'])}</g:price>",
+            f"      <g:condition>{escape(item['condition'])}</g:condition>",
+            f"      <g:brand>{escape(item['brand'])}</g:brand>",
+        ]
+        if item.get('image_link'):
+            lines.append(f"      <g:image_link>{escape(item['image_link'])}</g:image_link>")
+        if item.get('sale_price'):
+            lines.append(f"      <g:sale_price>{escape(item['sale_price'])}</g:sale_price>")
+        if item.get('sale_effective_date'):
+            lines.append(f"      <g:sale_price_effective_date>{escape(item['sale_effective_date'])}</g:sale_price_effective_date>")
+        lines.append("    </item>")
+        xml_items.append("\n".join(lines))
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n'
+        '  <channel>\n'
+        '    <title>SofaHub Product Feed</title>\n'
+        f'    <link>{escape(site_url)}</link>\n'
+        '    <description>Product feed for Google Merchant Center</description>\n'
+        f"{chr(10).join(xml_items)}\n"
+        '  </channel>\n'
+        '</rss>\n'
+    )
+    return HttpResponse(xml, content_type='application/xml; charset=utf-8')
