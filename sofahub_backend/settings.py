@@ -198,6 +198,10 @@ CSRF_TRUSTED_ORIGINS = [
 # Default: 'storage' - compresses images to save storage costs while being fast
 IMAGE_OPTIMIZATION_MODE = os.getenv('IMAGE_OPTIMIZATION_MODE', 'storage').lower()
 
+# Blog uploads should not block admin publish flow.
+# Default to async/non-blocking for blog images unless explicitly overridden.
+BLOG_IMAGE_OPTIMIZATION_MODE = os.getenv('BLOG_IMAGE_OPTIMIZATION_MODE', 'async').lower()
+
 # Image validation settings
 # ENABLE_HEAVY_VALIDATION: Set to 'true' to enable full image verification (slower but more secure)
 # Default: 'false' in production, 'true' in development

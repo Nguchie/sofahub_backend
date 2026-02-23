@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.text import slugify
-from django.utils.html import strip_tags
 from django.conf import settings
 import re
 
@@ -101,10 +100,29 @@ class BlogPost(models.Model):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
         
-        # Handle featured image optimization based on mode
+        # Only optimize when a new featured image is uploaded or changed.
+        # Re-optimizing the same image on every edit can make admin saves slow.
+        should_optimize_image = False
         if self.featured_image:
+            if not self.pk:
+                should_optimize_image = True
+            else:
+                old_image_name = (
+                    BlogPost.objects.filter(pk=self.pk)
+                    .values_list('featured_image', flat=True)
+                    .first()
+                )
+                current_image_name = getattr(self.featured_image, 'name', None)
+                should_optimize_image = str(old_image_name or '') != str(current_image_name or '')
+
+        # Handle featured image optimization based on mode
+        if self.featured_image and should_optimize_image:
             from core.utils import optimize_image, optimize_image_async, optimize_image_storage
-            optimization_mode = getattr(settings, 'IMAGE_OPTIMIZATION_MODE', 'storage')
+            optimization_mode = getattr(
+                settings,
+                'BLOG_IMAGE_OPTIMIZATION_MODE',
+                getattr(settings, 'IMAGE_OPTIMIZATION_MODE', 'async')
+            ).lower()
             
             try:
                 if optimization_mode == 'storage':
