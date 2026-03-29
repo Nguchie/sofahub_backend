@@ -91,6 +91,17 @@ class BlogPost(models.Model):
     
     def __str__(self):
         return self.title
+
+    def clean(self):
+        """Validate featured image before saving to avoid slow failing uploads."""
+        if self.featured_image:
+            from core.utils import validate_blog_image
+            from django.core.exceptions import ValidationError
+
+            try:
+                validate_blog_image(self.featured_image)
+            except Exception as e:
+                raise ValidationError({'featured_image': str(e)})
     
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -138,6 +149,7 @@ class BlogPost(models.Model):
             except Exception as e:
                 print(f"⚠️ Blog image optimization failed: {e}")
         
+        self.full_clean()
         super().save(*args, **kwargs)
     
     @property

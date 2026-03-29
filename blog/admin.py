@@ -40,7 +40,7 @@ class BlogPostAdmin(admin.ModelAdmin):
     ]
     search_fields = ['title', 'excerpt', 'content']
     prepopulated_fields = {'slug': ('title',)}
-    filter_horizontal = ['tags', 'related_products', 'related_categories']
+    autocomplete_fields = ['tags', 'related_products', 'related_categories']
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = [
